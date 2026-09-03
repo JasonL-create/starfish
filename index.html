@@ -2783,6 +2783,9 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
   let syncTimer = null;
   let syncRunning = false;
   let syncQueued = false;
+  let realtimeChannel = null;
+  let realtimeReloadTimer = null;
+  let suppressRealtimeReload = false;
 
   const originalSave = save;
   save = function() {
@@ -2917,6 +2920,7 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
     if (!activeUser) return;
     if (syncRunning) { syncQueued = true; return; }
     syncRunning = true;
+    suppressRealtimeReload = true;
     setCloudStatus('Saving…', true);
     try {
       const uid = activeUser.id;
@@ -3007,6 +3011,7 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
       setCloudStatus('Saved on device', false);
     } finally {
       syncRunning = false;
+      setTimeout(() => { suppressRealtimeReload = false; }, 350);
       if (syncQueued) {
         syncQueued = false;
         scheduleCloudSync(150);
@@ -3028,6 +3033,82 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
     const contacts = await sb.from('contacts').select('id').eq('user_id',activeUser.id).limit(1);
     if (contacts.error) throw contacts.error;
     return !!((cats.data||[]).length || (contacts.data||[]).length);
+  }
+
+
+  function teardownRealtime() {
+    clearTimeout(realtimeReloadTimer);
+    realtimeReloadTimer = null;
+    if (realtimeChannel) {
+      try { sb.removeChannel(realtimeChannel); } catch (e) {}
+      realtimeChannel = null;
+    }
+  }
+
+  async function reloadFromCloudRealtime() {
+    if (!activeUser || !cloudReady || syncRunning || suppressRealtimeReload) return;
+    try {
+      setCloudStatus('Syncing…', true);
+      const fresh = await loadCloudState();
+      state = fresh;
+      localStorage.setItem(activeStorageKey, JSON.stringify(state));
+      render();
+      setCloudStatus('Saved', true);
+    } catch (err) {
+      console.error('Starfish realtime reload failed', err);
+      setCloudStatus('Saved on device', false);
+    }
+  }
+
+  function scheduleRealtimeReload() {
+    if (!activeUser || !cloudReady || suppressRealtimeReload) return;
+    clearTimeout(realtimeReloadTimer);
+    realtimeReloadTimer = setTimeout(reloadFromCloudRealtime, 250);
+  }
+
+  function setupRealtime() {
+    teardownRealtime();
+    if (!activeUser) return;
+
+    const uid = activeUser.id;
+    realtimeChannel = sb
+      .channel(`starfish-${uid}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'categories',
+        filter: `user_id=eq.${uid}`
+      }, scheduleRealtimeReload)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'contacts',
+        filter: `user_id=eq.${uid}`
+      }, scheduleRealtimeReload)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'tasks',
+        filter: `user_id=eq.${uid}`
+      }, scheduleRealtimeReload)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'subtasks',
+        filter: `user_id=eq.${uid}`
+      }, scheduleRealtimeReload)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'task_invites',
+        filter: `owner_user_id=eq.${uid}`
+      }, scheduleRealtimeReload)
+      .subscribe(status => {
+        if (status === 'SUBSCRIBED') setCloudStatus('Saved', true);
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          console.warn('Starfish realtime status:', status);
+        }
+      });
   }
 
   async function enterApp(user) {
@@ -3059,6 +3140,7 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
       }
 
       cloudReady = true;
+      setupRealtime();
       document.body.classList.remove('sf-auth-pending');
       document.body.classList.remove('sf-auth-ready');
       view='current';
@@ -3074,6 +3156,7 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
         document.body.classList.remove('sf-auth-ready');
         render();
         cloudReady = true;
+        setupRealtime();
         setCloudStatus('Saved on device', false);
       } else {
         setAuthMessage('Could not connect to cloud storage. Check your connection and try again.', true);
@@ -3113,6 +3196,7 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
   document.getElementById('sfAuthPassword').addEventListener('keydown', e=>{if(e.key==='Enter')signIn();});
   document.getElementById('sfSignOut').addEventListener('click', async()=>{
     cloudReady=false;
+    teardownRealtime();
     if (activeUser) localStorage.setItem(activeStorageKey, JSON.stringify(state));
     await sb.auth.signOut();
     activeUser=null; activeStorageKey=null;
