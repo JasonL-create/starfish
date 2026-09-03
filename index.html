@@ -1597,6 +1597,12 @@ body:not(.sf-auth-pending) .sf-auth-screen{display:none}
 }
 </style>
 
+
+<style id="v66-auth-flash-fix">
+body.sf-auth-pending .sf-auth-screen{visibility:hidden!important}
+body.sf-auth-ready.sf-auth-pending .sf-auth-screen{visibility:visible!important}
+</style>
+
 </head>
 <body class="sf-auth-pending">
 
@@ -3054,6 +3060,7 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
 
       cloudReady = true;
       document.body.classList.remove('sf-auth-pending');
+      document.body.classList.remove('sf-auth-ready');
       view='current';
       ageView='all';
       setActiveTab();
@@ -3064,6 +3071,7 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
       if (cache) {
         state = normalizeStateShape(cache);
         document.body.classList.remove('sf-auth-pending');
+        document.body.classList.remove('sf-auth-ready');
         render();
         cloudReady = true;
         setCloudStatus('Saved on device', false);
@@ -3109,6 +3117,7 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
     await sb.auth.signOut();
     activeUser=null; activeStorageKey=null;
     document.body.classList.add('sf-auth-pending');
+    document.body.classList.add('sf-auth-ready');
     document.getElementById('sfAuthPassword').value='';
     setAuthMessage('Signed out.');
   });
@@ -3124,6 +3133,7 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
       await enterApp(data.session.user);
     } else {
       document.body.classList.add('sf-auth-pending');
+      document.body.classList.add('sf-auth-ready');
       setAuthMessage('');
     }
   })();
