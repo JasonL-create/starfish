@@ -2669,6 +2669,74 @@ body:not(.sf-auth-pending) #floatingNewTask{
 }
 </style>
 
+
+<style id="v80a-navigation-refinement">
+/* Selection underline belongs immediately beneath the text, not beneath the strip border. */
+.age-filter{
+  height:auto!important;
+  align-self:center!important;
+  padding:7px 0 5px!important;
+}
+.age-filter.active::after{
+  left:0!important;
+  right:0!important;
+  bottom:0!important;
+  height:2px!important;
+}
+.quick-search-toggle.search-active::after{
+  bottom:2px!important;
+}
+
+/* The row itself now states its selection: "View - Current", "Sort by - Newest". */
+#viewRow .option-value-wrap,
+#sortRow .option-value-wrap,
+#filterRow .option-value-wrap{
+  display:none!important;
+}
+#viewRow,#sortRow,#filterRow{
+  justify-content:flex-start!important;
+}
+#viewRow .option-label,
+#sortRow .option-label,
+#filterRow .option-label{
+  flex:1!important;
+}
+
+/* Active state sits immediately beneath the fixed Tasks/Search strip. */
+.active-filter-status{
+  margin:-5px 0 12px!important;
+  min-height:30px;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+  padding:0 2px;
+  font-size:11px;
+  color:#7b857f;
+}
+.active-filter-status[hidden]{display:none!important}
+.active-filter-status button{
+  border:0;
+  background:transparent;
+  padding:4px 0;
+  color:var(--starfish-orange,#ff6b45);
+  font:inherit;
+  font-weight:700;
+  cursor:pointer;
+  text-decoration:underline;
+  text-underline-offset:2px;
+}
+
+/* No category-filter reset options inside the list; Clear Filter is now the reset affordance. */
+#categoryChoiceList:empty::after{
+  content:"No categories yet";
+  display:block;
+  padding:10px 2px;
+  color:var(--muted);
+  font-size:12px;
+}
+</style>
+
 </head>
 <body class="sf-auth-pending">
 
@@ -2736,7 +2804,7 @@ body:not(.sf-auth-pending) #floatingNewTask{
         <span class="option-label"><span class="option-icon"><svg class="option-svg" viewBox="0 0 24 24" aria-hidden="true">
   <path d="M2.5 12s3.7-6 9.5-6 9.5 6 9.5 6-3.7 6-9.5 6S2.5 12 2.5 12z" fill="none" stroke="currentColor" stroke-width="1.8"/>
   <circle cx="12" cy="12" r="2.8" fill="none" stroke="currentColor" stroke-width="1.8"/>
-</svg></span><span>View</span></span>
+</svg></span><span id="viewRowLabel">View - Current</span></span>
         <span class="details-value option-value-wrap"><span id="viewSummary">Current</span><span class="row-chevron">⌄</span></span>
       </button>
       <div id="viewEditor" class="filter-editor direct-choice-editor" hidden>
@@ -2756,7 +2824,7 @@ body:not(.sf-auth-pending) #floatingNewTask{
       <button id="sortRow" class="list-options-row list-options-button-row" type="button">
         <span class="option-label"><span class="option-icon"><svg class="option-svg" viewBox="0 0 24 24" aria-hidden="true">
   <path d="M8 4v16M5 7l3-3 3 3M16 20V4M13 17l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-</svg></span><span>Sort by</span></span>
+</svg></span><span id="sortRowLabel">Sort by - Newest</span></span>
         <span class="details-value option-value-wrap"><span id="sortSummary">Newest</span><span class="row-chevron">⌄</span></span>
       </button>
       <div id="sortEditor" class="filter-editor direct-choice-editor" hidden>
@@ -2776,7 +2844,7 @@ body:not(.sf-auth-pending) #floatingNewTask{
       <button id="filterRow" class="list-options-row list-options-button-row" type="button">
         <span class="option-label"><span class="option-icon"><svg class="option-svg" viewBox="0 0 24 24" aria-hidden="true">
   <path d="M4 5h16l-6.3 7.2v5.1l-3.4 1.7v-6.8L4 5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-</svg></span><span>Filter</span></span>
+</svg></span><span id="filterRowLabel">Filter</span></span>
         <span class="details-value option-value-wrap"><span id="filterSummary">All</span><span class="row-chevron">⌄</span></span>
       </button>
       <div id="filterEditor" class="filter-editor direct-choice-editor" hidden>
@@ -2796,6 +2864,10 @@ body:not(.sf-auth-pending) #floatingNewTask{
     </div>
     <button id="utilityToggle" class="quick-search-toggle" type="button" aria-expanded="false" aria-label="Search and list options"><svg class="quick-search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m15.5 15.5 5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span>SEARCH</span></button>
   </div>
+</div>
+<div id="activeFilterStatus" class="active-filter-status" hidden>
+  <span id="activeFilterText">Filtered</span>
+  <button id="clearActiveFilters" type="button">Clear Filter</button>
 </div>
 <main id="taskList" class="tasks"></main>
 </div>
@@ -3114,15 +3186,56 @@ function isOverdue(t){return !t.hidden && !!t.dueDate && t.dueDate < localToday(
 function isOldTask(t){return !t.hidden && (Date.now()-new Date(t.createdAt).getTime()) >= 7*24*60*60*1000 && !isFullyComplete(t);}
 
 function syncListOptionSummaries(){
-  const sort=document.getElementById('sortBy');
-  const sortSummary=document.getElementById('sortSummary');
-  if(sort&&sortSummary)sortSummary.textContent=sort.options[sort.selectedIndex]?.text||'Newest';
+  const viewSelect=document.getElementById('viewBy');
+  const sortSelect=document.getElementById('sortBy');
+  const catSelect=document.getElementById('categoryFilter');
+
+  const viewText=viewSelect?.options[viewSelect.selectedIndex]?.text || 'Current';
+  const sortText=sortSelect?.options[sortSelect.selectedIndex]?.text || 'Newest';
+  const catText=(catSelect?.value && catSelect.value!=='all') ? catSelect.value : '';
+
   const viewSummary=document.getElementById('viewSummary');
-  if(viewSummary)viewSummary.textContent=
-    view==='completed'?'Completed':
-    view==='shared-out'?'Tasks I Shared':
-    view==='shared-in'?'Tasks Shared With Me':'Current';
+  const sortSummary=document.getElementById('sortSummary');
+  const filterSummary=document.getElementById('filterSummary');
+  if(viewSummary)viewSummary.textContent=viewText;
+  if(sortSummary)sortSummary.textContent=sortText;
+  if(filterSummary)filterSummary.textContent=catText||'All';
+
+  const viewLabel=document.getElementById('viewRowLabel');
+  const sortLabel=document.getElementById('sortRowLabel');
+  const filterLabel=document.getElementById('filterRowLabel');
+  if(viewLabel)viewLabel.textContent=`View - ${viewText}`;
+  if(sortLabel)sortLabel.textContent=`Sort by - ${sortText}`;
+  if(filterLabel)filterLabel.textContent=catText?`Filter - ${catText}`:'Filter';
 }
+function updateActiveFilterStatus(){
+  const q=document.getElementById('search')?.value.trim()||'';
+  const cat=document.getElementById('categoryFilter')?.value||'all';
+  const sort=document.getElementById('sortBy')?.value||'created-desc';
+  const active = !!q || cat!=='all' || sort!=='created-desc' || view!=='current' || ageView!=='all';
+
+  const bar=document.getElementById('activeFilterStatus');
+  const text=document.getElementById('activeFilterText');
+  if(!bar||!text)return;
+  bar.hidden=!active;
+  if(!active)return;
+
+  const parts=[];
+  if(q) parts.push(`Search: “${q}”`);
+  if(view!=='current'){
+    const sel=document.getElementById('viewBy');
+    parts.push(sel?.options[sel.selectedIndex]?.text||'View');
+  }
+  if(ageView==='old') parts.push('7+ Days');
+  if(ageView==='overdue') parts.push('Overdue');
+  if(cat!=='all') parts.push(cat);
+  if(sort!=='created-desc'){
+    const sel=document.getElementById('sortBy');
+    parts.push(`Sort: ${sel?.options[sel.selectedIndex]?.text||''}`);
+  }
+  text.textContent=parts.length ? `Filtered · ${parts.join(' · ')}` : 'Filtered';
+}
+
 
 
 
@@ -3187,6 +3300,7 @@ function bindPendingInviteCards(){
 function render(){
   syncListOptionSummaries();
   renderFilters();
+  syncListOptionSummaries();
   const q=document.getElementById('search').value.trim().toLowerCase();
   const cat=document.getElementById('categoryFilter').value;
   const sort=document.getElementById('sortBy').value;
@@ -3206,7 +3320,7 @@ function render(){
     else if(view==='shared-out') tasks=tasks.filter(t=>!t.hidden && !t.shared && !!t.invitedUser);
     else if(view==='shared-in') tasks=tasks.filter(t=>!t.hidden && !!t.shared);
   }
-  if(cat!=='all') tasks=tasks.filter(t=>cat==='none'?!t.category:t.category===cat);
+  if(cat!=='all') tasks=tasks.filter(t=>t.category===cat);
 
   const currentTasks=state.tasks.filter(t=>!t.hidden);
   const oldCount=currentTasks.filter(isOldTask).length;
@@ -3216,6 +3330,7 @@ function render(){
   document.querySelector('[data-age-view="overdue"]').textContent=`OVERDUE (${overdueCount})`;
   document.querySelectorAll('.age-filter').forEach(b=>b.classList.toggle('active',b.dataset.ageView===ageView));
   document.querySelector('.overdue-filter').classList.toggle('has-overdue',overdueCount>0);
+  updateActiveFilterStatus();
   if(!q && view==='current'){
     if(ageView==='old') tasks=tasks.filter(isOldTask);
     if(ageView==='overdue') tasks=tasks.filter(isOverdue);
@@ -3301,17 +3416,17 @@ function taskHtml(t,q){
 
 function renderFilters(){
   const sel=document.getElementById('categoryFilter'); const current=sel.value;
-  sel.innerHTML='<option value="all">All categories</option><option value="none">No category</option>'+state.categories.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  sel.innerHTML='<option value="all">All categories</option>'+state.categories.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
   if([...sel.options].some(o=>o.value===current))sel.value=current;
   const summary=document.getElementById('filterSummary');
   if(summary){
-    summary.textContent=sel.value==='all'?'All':sel.value==='none'?'No category':sel.value;
+    summary.textContent=sel.value==='all'?'All':sel.value;
   }
   const hs=document.getElementById('hideCategorySelect');if(hs)hs.innerHTML=state.categories.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
 
   const choiceList=document.getElementById('categoryChoiceList');
   if(choiceList){
-    const choices=[['all','All categories'],['none','No category'],...state.categories.map(c=>[c,c])];
+    const choices=[...state.categories.map(c=>[c,c])];
     choiceList.innerHTML=choices.map(([value,label])=>`<button type="button" data-category-choice="${esc(value)}" class="${sel.value===value?'selected':''}">${esc(label)}</button>`).join('');
     choiceList.querySelectorAll('[data-category-choice]').forEach(btn=>btn.addEventListener('click',()=>{
       sel.value=btn.dataset.categoryChoice;
@@ -3411,9 +3526,12 @@ document.querySelectorAll('.age-filter').forEach(btn=>btn.addEventListener('clic
     view='current';
     const search=document.getElementById('search');
     const cat=document.getElementById('categoryFilter');
+    const sort=document.getElementById('sortBy');
     if(search) search.value='';
     if(cat) cat.value='all';
+    if(sort) sort.value='created-desc';
     setActiveTab();
+    updateSearchState();
     closeUtilityPanel();
     render();
     return;
@@ -3439,6 +3557,22 @@ function updateSearchState(){
     if(label) label.textContent=active?'SEARCHING':'SEARCH';
   }
 }
+
+document.getElementById('clearActiveFilters').addEventListener('click',()=>{
+  view='current';
+  ageView='all';
+  const search=document.getElementById('search');
+  const cat=document.getElementById('categoryFilter');
+  const sort=document.getElementById('sortBy');
+  if(search) search.value='';
+  if(cat) cat.value='all';
+  if(sort) sort.value='created-desc';
+  setActiveTab();
+  updateSearchState();
+  closeUtilityPanel();
+  render();
+});
+
 document.getElementById('utilityToggle').addEventListener('click',()=>{
  const p=document.getElementById('utilityPanel'), b=document.getElementById('utilityToggle');
  const opening=p.classList.contains('collapsed');
