@@ -2059,6 +2059,17 @@ body:has(#authScreen:not([hidden])) #floatingNewTask{
 }
 </style>
 
+
+<style id="v79b-auth-button-fix">
+/* Correct auth-state guard: the real login screen is #sfAuthScreen and signed-out state is body.sf-auth-pending. */
+body.sf-auth-pending #floatingNewTask{
+  display:none!important;
+}
+body:not(.sf-auth-pending) #floatingNewTask{
+  display:flex!important;
+}
+</style>
+
 </head>
 <body class="sf-auth-pending">
 
@@ -4112,6 +4123,25 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
     attributeFilter:['class','style','hidden']
   });
   guardNewTask();
+})();
+</script>
+
+
+<script id="v79b-auth-button-guard">
+(()=>{
+  const fab=document.getElementById('floatingNewTask');
+  if(!fab)return;
+
+  function syncFabToAuthState(){
+    const signedOut=document.body.classList.contains('sf-auth-pending');
+    fab.style.setProperty('display', signedOut ? 'none' : 'flex', 'important');
+  }
+
+  new MutationObserver(syncFabToAuthState).observe(document.body,{
+    attributes:true,
+    attributeFilter:['class']
+  });
+  syncFabToAuthState();
 })();
 </script>
 
