@@ -2526,6 +2526,77 @@ body:not(.sf-auth-pending) #floatingNewTask{
 }
 </style>
 
+
+<style id="v79o-responsive-header-fix">
+.topbar{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) 46px!important;
+  column-gap:14px!important;
+  align-items:center!important;
+  flex-direction:unset!important;
+  gap:14px!important;
+}
+.topbar .brand,
+.topbar .starfish-brand,
+.topbar .supplied-brand{
+  width:auto!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:0!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  text-align:left!important;
+}
+.sf-profile-button{
+  position:relative!important;
+  top:auto!important;
+  right:auto!important;
+  margin:0!important;
+  justify-self:end!important;
+  align-self:center!important;
+}
+@media(min-width:481px) and (max-width:760px){
+  :root{
+    --v79-header-h:84px;
+    --v79-summary-h:50px;
+  }
+  .topbar{
+    height:var(--v79-header-h)!important;
+    padding:8px 18px!important;
+    grid-template-columns:minmax(0,1fr) 44px!important;
+  }
+  .supplied-brand-logo{
+    width:166px!important;
+    max-width:44vw!important;
+    margin:0!important;
+  }
+  .sf-profile-button{
+    width:42px!important;
+    height:42px!important;
+  }
+  .sf-profile-button svg{
+    width:32px!important;
+    height:32px!important;
+  }
+  .tasks-section-divider{
+    top:var(--v79-header-h)!important;
+  }
+  .app{
+    padding-top:calc(var(--v79-header-h) + var(--v79-summary-h) + 14px)!important;
+  }
+}
+@media(min-width:761px){
+  .topbar{
+    grid-template-columns:minmax(0,1fr) 46px!important;
+  }
+  .supplied-brand-logo{
+    margin-left:0!important;
+    margin-right:auto!important;
+  }
+}
+</style>
+
 </head>
 <body class="sf-auth-pending">
 
