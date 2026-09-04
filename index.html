@@ -1619,6 +1619,52 @@ body.sf-auth-ready.sf-auth-pending .sf-auth-screen{visibility:visible!important}
 .sf-shared-readonly{font-size:11px;color:#748078;margin-top:5px}
 </style>
 
+
+<style id="v70-invite-cards">
+.sf-pending-invite-card{
+  border:2px solid var(--starfish-orange,#ff6b45);
+  border-radius:14px;
+  background:rgba(255,107,69,.08);
+  padding:16px;
+  margin:0 0 14px;
+  box-sizing:border-box;
+}
+.sf-pending-invite-title{
+  font-size:17px;
+  font-weight:750;
+  color:#24362f;
+  margin:0 0 4px;
+}
+.sf-pending-invite-copy{
+  font-size:13px;
+  color:#68756d;
+  margin:0 0 14px;
+}
+.sf-pending-invite-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+.sf-pending-invite-accept,
+.sf-pending-invite-decline{
+  min-height:42px;
+  border-radius:9px;
+  font:inherit;
+  font-weight:700;
+  cursor:pointer;
+}
+.sf-pending-invite-accept{
+  border:1px solid var(--starfish-green,#285f4b);
+  background:var(--starfish-green,#285f4b);
+  color:#fff;
+}
+.sf-pending-invite-decline{
+  border:1px solid var(--starfish-orange,#ff6b45);
+  background:#fff;
+  color:#d95537;
+}
+</style>
+
 </head>
 <body class="sf-auth-pending">
 
@@ -1651,7 +1697,6 @@ body.sf-auth-ready.sf-auth-pending .sf-auth-screen{visibility:visible!important}
       <span id="sfAccountEmail" class="sf-account-email"></span>
     </div>
     <div class="sf-account-actions">
-      <button id="sfInvitesButton" class="sf-invites-button" type="button" hidden>Invitations <span id="sfInviteCount">0</span></button>
       <button id="sfSignOut" class="sf-signout" type="button">Sign out</button>
     </div>
   </div>
@@ -2037,6 +2082,30 @@ function syncListOptionSummaries(){
   const viewSummary=document.getElementById('viewSummary');
   if(viewSummary)viewSummary.textContent=view==='completed'?'Completed':'Current';
 }
+
+function pendingInviteCardsHtml(){
+  const pending=(window.__sfReceivedInvites||[]).filter(i=>i.status==='pending');
+  return pending.map(inv=>`
+    <article class="sf-pending-invite-card" data-pending-invite="${inv.id}">
+      <div class="sf-pending-invite-title">Task Invitation</div>
+      <div class="sf-pending-invite-copy">A task has been shared with you.</div>
+      <div class="sf-pending-invite-actions">
+        <button class="sf-pending-invite-accept" type="button" data-invite-accept="${inv.id}">Accept</button>
+        <button class="sf-pending-invite-decline" type="button" data-invite-decline="${inv.id}">Decline</button>
+      </div>
+    </article>
+  `).join('');
+}
+
+function bindPendingInviteCards(){
+  document.querySelectorAll('#taskList [data-invite-accept]').forEach(btn=>{
+    btn.addEventListener('click',()=>respondToInvite(btn.dataset.inviteAccept,'accepted'));
+  });
+  document.querySelectorAll('#taskList [data-invite-decline]').forEach(btn=>{
+    btn.addEventListener('click',()=>respondToInvite(btn.dataset.inviteDecline,'declined'));
+  });
+}
+
 function render(){
   syncListOptionSummaries();
   renderFilters();
@@ -2081,11 +2150,14 @@ function render(){
   });
 
   const list=document.getElementById('taskList');
+  const inviteCards = (!q && view==='current' && ageView==='all') ? pendingInviteCardsHtml() : '';
   if(!tasks.length){
-    list.innerHTML=`<div class="empty"><strong>${q?'No matching tasks':view==='current'?'Nothing needs your attention.':'No completed tasks yet.'}</strong>${q?'Try another search term.':view==='current'?'Add a task when something comes up.':'Finished tasks you hide will live here.'}</div>`;
+    list.innerHTML=inviteCards + `<div class="empty"><strong>${q?'No matching tasks':view==='current'?'Nothing needs your attention.':'No completed tasks yet.'}</strong>${q?'Try another search term.':view==='current'?'Add a task when something comes up.':'Finished tasks you hide will live here.'}</div>`;
+    bindPendingInviteCards();
     return;
   }
-  list.innerHTML=tasks.map(t=>taskHtml(t,q)).join('');
+  list.innerHTML=inviteCards + tasks.map(t=>taskHtml(t,q)).join('');
+  bindPendingInviteCards();
   bindTaskEvents();
 }
 
@@ -2106,7 +2178,7 @@ function taskHtml(t,q){
   return `<article class="task-card ${q&&t.hidden?'search-completed':''} ${overdue?'is-overdue':''}" data-task="${t.id}">
     <div class="task-top">
       <input class="check parent-check" type="checkbox" ${done?'checked':''} aria-label="Complete task">
-      <div class="task-title ${done?'done':''}">${highlight(t.title,q)}${searchStatus}</div>
+      <div class="task-title ${done?'done':''}">${highlight(t.title,q)}${searchStatus}${t.shared?'<div class="sf-shared-readonly">Shared task</div>':''}</div>
       
     </div>
     ${(t.subtasks.length||t.showSubtaskComposer)?`<div class="subtasks">
@@ -2114,11 +2186,11 @@ function taskHtml(t,q){
         <input class="check sub-check" type="checkbox" ${st.complete?'checked':''} aria-label="Complete sub-task">
         <div class="subtask-title ${st.complete?'done':''}">${highlight(st.title,q)}</div>
       </div>`).join('')}
-      ${t.showSubtaskComposer?`<form class="subtask-composer"><input class="subtask-input" placeholder="Add a sub-task…" autocomplete="off"><button class="subtask-add" type="submit">Add</button><button class="subtask-cancel" type="button" aria-label="Close sub-task entry">×</button></form>`:''}
+      ${(!t.shared && t.showSubtaskComposer)?`<form class="subtask-composer"><input class="subtask-input" placeholder="Add a sub-task…" autocomplete="off"><button class="subtask-add" type="submit">Add</button><button class="subtask-cancel" type="button" aria-label="Close sub-task entry">×</button></form>`:''}
     </div>`:''}
     <div class="task-status-actions">
       ${t.pinned?`<span class="pin-status-icon" title="Pinned" aria-label="Pinned"><svg class="pin-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h8l-1.4 5.2 2.9 3.1v1.7H13v7l-1 1.5-1-1.5v-7H6.5v-1.7l2.9-3.1L8 3z" fill="currentColor"/></svg></span>`:''}
-      <button class="task-menu-btn vertical-dots" type="button" aria-label="Task details">⋮</button>
+      ${t.shared?'':`<button class="task-menu-btn vertical-dots" type="button" aria-label="Task details">⋮</button>`}
     </div>
 
     ${(t.dueDate||t.reminderAt||t.invitedUser)?`<div class="task-indicator-row">
@@ -2130,7 +2202,7 @@ function taskHtml(t,q){
         ${t.invitedUser?`<span class="task-indicator invite-indicator"><svg class="indicator-svg person-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7" r="4" fill="currentColor"></circle><path d="M5 21c.5-5 3.1-8 7-8s6.5 3 7 8H5z" fill="currentColor"></path></svg><span>${esc(t.invitedUser)}</span></span>`:''}
       </div>
     </div>`:''}
-    ${fully&&!t.hidden?`<div class="hide-prompt"><span>Everything is checked. <strong>Ready to hide?</strong></span><div class="prompt-actions"><button class="keep" type="button">Keep visible</button><button class="hide-confirm" type="button">Hide</button></div></div>`:''}
+    ${fully&&!t.hidden&&!t.shared?`<div class="hide-prompt"><span>Everything is checked. <strong>Ready to hide?</strong></span><div class="prompt-actions"><button class="keep" type="button">Keep visible</button><button class="hide-confirm" type="button">Hide</button></div></div>`:''}
     ${t.hidden?`<div class="completion-note">Completed ${fmt(t.completedAt)} · Uncheck the task or any sub-task to return it to Current.</div>`:''}
   </article>`;
 }
@@ -2192,16 +2264,18 @@ function bindTaskEvents(){
       });
       input.addEventListener('blur',()=>finish(true));
     }
-    card.querySelector('.task-title').addEventListener('click',e=>{
-      beginInlineEdit(e.currentTarget,()=>t.title,v=>t.title=v);
-    });
-    card.querySelectorAll('.subtask').forEach(row=>{
-      const title=row.querySelector('.subtask-title');
-      title.addEventListener('click',()=>{
-        const st=t.subtasks.find(x=>x.id===row.dataset.subtask);
-        beginInlineEdit(title,()=>st.title,v=>st.title=v);
+    if(!t.shared){
+      card.querySelector('.task-title').addEventListener('click',e=>{
+        beginInlineEdit(e.currentTarget,()=>t.title,v=>t.title=v);
       });
-    });
+      card.querySelectorAll('.subtask').forEach(row=>{
+        const title=row.querySelector('.subtask-title');
+        title.addEventListener('click',()=>{
+          const st=t.subtasks.find(x=>x.id===row.dataset.subtask);
+          beginInlineEdit(title,()=>st.title,v=>st.title=v);
+        });
+      });
+    }
     const subtaskComposer=card.querySelector('.subtask-composer'); if(subtaskComposer) subtaskComposer.addEventListener('submit',e=>{e.preventDefault();const input=e.target.querySelector('input');const title=input.value.trim();if(!title)return;t.subtasks.push({id:crypto.randomUUID(),title,createdAt:new Date().toISOString(),complete:false,completedAt:null});t.showSubtaskComposer=true;input.value='';save();render();});
     const subtaskCancel=card.querySelector('.subtask-cancel');
     if(subtaskCancel) subtaskCancel.addEventListener('click',()=>{
@@ -2790,8 +2864,8 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
 </script>
 
 
-<div class="modal" id="sfInvitesModal" hidden>
-  <div class="modal-card sf-invite-modal-card">
+<div class="modal-backdrop" id="sfInvitesModal" hidden>
+  <div class="modal sf-invite-modal-card">
     <div class="modal-head">
       <h2>Invitations</h2>
       <button class="icon-btn" id="sfInvitesClose" type="button" aria-label="Close">×</button>
@@ -3097,12 +3171,7 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
   }
 
   function updateInvitationUI() {
-    const pending = pendingReceivedInvites();
-    const btn = document.getElementById('sfInvitesButton');
-    const count = document.getElementById('sfInviteCount');
-    if (!btn || !count) return;
-    count.textContent = pending.length;
-    btn.hidden = pending.length === 0;
+    // Pending invitations are rendered as cards in the task feed.
   }
 
   async function refreshInvitationsOnly() {
@@ -3115,6 +3184,7 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
       window.__sfReceivedInvites=res.data||[];
       updateInvitationUI();
       renderInvitationList();
+      if (cloudReady) render();
     }
   }
 
@@ -3277,12 +3347,9 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
       } else if (cache) {
         state = normalizeStateShape(cache);
         await syncStateToCloud();
-      } else if (legacyWasPresent && !migratedFlag) {
-        // First cloud account on this browser: preserve the user's existing V64 work.
-        state = normalizeStateShape(state);
-        await syncStateToCloud();
-        localStorage.setItem('starfish-legacy-migrated','1');
       } else {
+        // New Starfish accounts always start clean. Existing cloud accounts still
+        // load their own saved data above.
         state = normalizeStateShape({categories:[],hiddenCategories:[],contacts:[],tasks:[]});
         localStorage.setItem(activeStorageKey, JSON.stringify(state));
       }
@@ -3355,23 +3422,13 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
   });
 
 
-  document.getElementById('sfInvitesButton').addEventListener('click',async()=>{
-    await refreshInvitationsOnly();
-    renderInvitationList();
-    document.getElementById('sfInvitesModal').hidden=false;
-  });
-  document.getElementById('sfInvitesClose').addEventListener('click',()=>{
-    document.getElementById('sfInvitesModal').hidden=true;
-  });
-
-
   document.addEventListener('change', e=>{
     const cb=e.target.closest('input[type="checkbox"]');
     if (!cb) return;
     setTimeout(()=>{
       const card=cb.closest('.task-card');
       if (!card) return;
-      const id=card.dataset.id;
+      const id=card.dataset.task;
       const t=(state.tasks||[]).find(x=>String(x.id)===String(id));
       if (t?.shared) saveSharedCompletion(t);
     },0);
