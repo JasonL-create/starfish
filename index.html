@@ -2427,6 +2427,47 @@ body:not(.sf-auth-pending) #floatingNewTask{
 }
 </style>
 
+
+<style id="v79g-dot-anchor-fix">
+/* Anchor the menu GROUP to the card, and let the dot button sit normally inside it.
+   This avoids absolutely positioning the button relative to the tiny status-actions box. */
+.task-status-actions{
+  position:absolute!important;
+  top:14px!important;
+  right:14px!important;
+  display:flex!important;
+  align-items:center!important;
+  gap:6px!important;
+  margin:0!important;
+  padding:0!important;
+}
+
+.task-status-actions .task-menu-btn.vertical-dots{
+  position:static!important;
+  top:auto!important;
+  right:auto!important;
+  left:auto!important;
+  bottom:auto!important;
+  width:36px!important;
+  height:36px!important;
+  min-width:36px!important;
+  min-height:36px!important;
+  margin:0!important;
+  padding:0!important;
+}
+
+/* Preserve the exact V79f dot size/appearance. */
+.task-status-actions .task-menu-btn.vertical-dots::before{
+  content:"";
+  width:5px;
+  height:5px;
+  border-radius:50%;
+  background:currentColor;
+  box-shadow:0 -9px 0 currentColor, 0 9px 0 currentColor;
+  display:block;
+}
+</style>
+
 </head>
 <body class="sf-auth-pending">
 
