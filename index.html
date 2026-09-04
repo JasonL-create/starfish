@@ -2773,6 +2773,18 @@ body:not(.sf-auth-pending) #floatingNewTask{
 }
 </style>
 
+
+<style id="v80e-subtask-checkbox-actual-selector-fix">
+/* Actual rendered subtask rows use .subtask, not .subtask-row. */
+.subtask{
+  align-items:start!important;
+}
+.subtask .check{
+  align-self:start!important;
+  margin-top:3px!important;
+}
+</style>
+
 </head>
 <body class="sf-auth-pending">
 
