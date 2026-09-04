@@ -2748,6 +2748,19 @@ body:not(.sf-auth-pending) #floatingNewTask{
 }
 </style>
 
+
+<style id="v80c-search-stack-flow-fix">
+.app{
+  --open-utility-height:0px;
+  padding-top:calc(
+    var(--v79-header-h) + var(--v79-summary-h) + 14px + var(--open-utility-height)
+  )!important;
+}
+.active-filter-status{
+  margin-top:-5px!important;
+}
+</style>
+
 </head>
 <body class="sf-auth-pending">
 
@@ -5026,6 +5039,32 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
 
   window.addEventListener('resize',syncSearchStack);
   syncSearchStack();
+})();
+</script>
+
+
+<script id="v80c-search-stack-flow-fix">
+(()=>{
+  const panel=document.getElementById('utilityPanel');
+  const app=document.querySelector('.app');
+  if(!panel||!app)return;
+
+  function syncOpenPanelSpace(){
+    const open=!panel.classList.contains('collapsed') && getComputedStyle(panel).display!=='none';
+    const h=open ? Math.ceil(panel.getBoundingClientRect().height) + 10 : 0;
+    app.style.setProperty('--open-utility-height',`${h}px`);
+  }
+
+  const ro=new ResizeObserver(syncOpenPanelSpace);
+  ro.observe(panel);
+
+  new MutationObserver(syncOpenPanelSpace).observe(panel,{
+    attributes:true,
+    attributeFilter:['class','style','hidden']
+  });
+
+  window.addEventListener('resize',syncOpenPanelSpace);
+  syncOpenPanelSpace();
 })();
 </script>
 
