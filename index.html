@@ -1603,6 +1603,22 @@ body.sf-auth-pending .sf-auth-screen{visibility:hidden!important}
 body.sf-auth-ready.sf-auth-pending .sf-auth-screen{visibility:visible!important}
 </style>
 
+
+<style id="v68-invitations">
+.sf-account-actions{display:flex;align-items:center;gap:12px}
+.sf-invites-button{border:0;background:transparent;color:#285f4b;font:inherit;font-size:12px;font-weight:700;padding:4px 0;cursor:pointer}
+.sf-invites-button span{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;border-radius:999px;background:#ff6b45;color:white;font-size:11px;margin-left:3px}
+.sf-invite-modal-card{max-width:480px}
+.sf-invite-card{border:1px solid var(--line);border-radius:12px;padding:14px;margin:10px 0;background:#fff}
+.sf-invite-task-title{font-weight:700;color:var(--text);margin-bottom:4px}
+.sf-invite-from{font-size:13px;color:#6b776f;margin-bottom:12px}
+.sf-invite-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sf-invite-accept,.sf-invite-decline{min-height:42px;border-radius:9px;font:inherit;font-weight:650;cursor:pointer}
+.sf-invite-accept{border:1px solid #285f4b;background:#285f4b;color:#fff}
+.sf-invite-decline{border:1px solid var(--line);background:#fff;color:#66736c}
+.sf-shared-readonly{font-size:11px;color:#748078;margin-top:5px}
+</style>
+
 </head>
 <body class="sf-auth-pending">
 
@@ -1634,7 +1650,10 @@ body.sf-auth-ready.sf-auth-pending .sf-auth-screen{visibility:visible!important}
       <span>·</span>
       <span id="sfAccountEmail" class="sf-account-email"></span>
     </div>
-    <button id="sfSignOut" class="sf-signout" type="button">Sign out</button>
+    <div class="sf-account-actions">
+      <button id="sfInvitesButton" class="sf-invites-button" type="button" hidden>Invitations <span id="sfInviteCount">0</span></button>
+      <button id="sfSignOut" class="sf-signout" type="button">Sign out</button>
+    </div>
   </div>
 
   <button id="openNewTask" class="new-task-launch" type="button">New Task</button>
@@ -2091,7 +2110,7 @@ function taskHtml(t,q){
       
     </div>
     ${(t.subtasks.length||t.showSubtaskComposer)?`<div class="subtasks">
-      ${t.subtasks.map(st=>`<div class="subtask" data-subtask="${st.id}">
+      ${[...t.subtasks].sort((a,b)=>Number(!!a.complete)-Number(!!b.complete)).map(st=>`<div class="subtask" data-subtask="${st.id}">
         <input class="check sub-check" type="checkbox" ${st.complete?'checked':''} aria-label="Complete sub-task">
         <div class="subtask-title ${st.complete?'done':''}">${highlight(st.title,q)}</div>
       </div>`).join('')}
@@ -2770,6 +2789,17 @@ document.addEventListener('change',e=>{if(e.target.matches('.check,.sub-check'))
 document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[data-action="pin"]'))v31Haptic(10);if(e.target.closest('#detailSendInvite,#createNewTask'))v31Haptic(14)});
 </script>
 
+
+<div class="modal" id="sfInvitesModal" hidden>
+  <div class="modal-card sf-invite-modal-card">
+    <div class="modal-head">
+      <h2>Invitations</h2>
+      <button class="icon-btn" id="sfInvitesClose" type="button" aria-label="Close">×</button>
+    </div>
+    <div id="sfInvitesList"></div>
+  </div>
+</div>
+
 <script id="v65-cloud-sync">
 (() => {
   const SUPABASE_URL = 'https://peidlqabptowhtzqtwxt.supabase.co';
@@ -2836,28 +2866,50 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
 
   async function loadCloudState() {
     const uid = activeUser.id;
+    const email = (activeUser.email || '').toLowerCase();
+
     const [
-      categoriesRes, contactsRes, tasksRes, subtasksRes, invitesRes
+      categoriesRes, contactsRes, ownedTasksRes, ownedSubtasksRes,
+      ownedInvitesRes, receivedInvitesRes
     ] = await Promise.all([
       sb.from('categories').select('*').eq('user_id', uid).order('created_at'),
       sb.from('contacts').select('*').eq('user_id', uid).order('created_at'),
       sb.from('tasks').select('*').eq('user_id', uid).order('created_at', {ascending:false}),
       sb.from('subtasks').select('*').eq('user_id', uid).order('sort_order').order('created_at'),
-      sb.from('task_invites').select('*').eq('owner_user_id', uid).order('created_at', {ascending:false})
+      sb.from('task_invites').select('*').eq('owner_user_id', uid).order('created_at', {ascending:false}),
+      sb.from('task_invites').select('*').or(`invited_user_id.eq.${uid},invited_email.ilike.${email}`).order('created_at', {ascending:false})
     ]);
 
-    const firstError = [categoriesRes,contactsRes,tasksRes,subtasksRes,invitesRes].find(r => r.error)?.error;
+    const firstError = [categoriesRes,contactsRes,ownedTasksRes,ownedSubtasksRes,ownedInvitesRes,receivedInvitesRes].find(r => r.error)?.error;
     if (firstError) throw firstError;
 
     const categories = categoriesRes.data || [];
     const contacts = contactsRes.data || [];
-    const tasks = tasksRes.data || [];
-    const subtasks = subtasksRes.data || [];
-    const invites = invitesRes.data || [];
+    const ownedTasks = ownedTasksRes.data || [];
+    const ownedSubtasks = ownedSubtasksRes.data || [];
+    const ownedInvites = ownedInvitesRes.data || [];
+    const receivedInvites = receivedInvitesRes.data || [];
+
+    window.__sfReceivedInvites = receivedInvites;
+
+    const acceptedTaskIds = [...new Set(receivedInvites.filter(i=>i.status==='accepted').map(i=>i.task_id))];
+    let sharedTasks = [];
+    let sharedSubtasks = [];
+    if (acceptedTaskIds.length) {
+      const [tr,sr] = await Promise.all([
+        sb.from('tasks').select('*').in('id',acceptedTaskIds),
+        sb.from('subtasks').select('*').in('task_id',acceptedTaskIds).order('sort_order').order('created_at')
+      ]);
+      if (tr.error) throw tr.error;
+      if (sr.error) throw sr.error;
+      sharedTasks = tr.data || [];
+      sharedSubtasks = sr.data || [];
+    }
 
     const categoryById = new Map(categories.map(c => [c.id, c.name]));
+    const allSubtasks = [...ownedSubtasks, ...sharedSubtasks];
     const subsByTask = new Map();
-    subtasks.forEach(st => {
+    allSubtasks.forEach(st => {
       if (!subsByTask.has(st.task_id)) subsByTask.set(st.task_id, []);
       subsByTask.get(st.task_id).push({
         id: st.id,
@@ -2867,12 +2919,33 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
         completedAt: st.completed_at
       });
     });
+
     const inviteByTask = new Map();
-    invites.forEach(inv => {
+    ownedInvites.forEach(inv => {
       if (!inviteByTask.has(inv.task_id) && inv.status !== 'cancelled' && inv.status !== 'declined') {
         inviteByTask.set(inv.task_id, inv);
       }
     });
+
+    const ownedMapped = ownedTasks.map(t => {
+      const inv = inviteByTask.get(t.id);
+      return {
+        id:t.id, title:t.title, createdAt:t.created_at, dueDate:t.due_date||'',
+        reminderAt:t.reminder_at||'', category:t.category_id ? (categoryById.get(t.category_id)||null) : null,
+        pinned:!!t.is_pinned, parentComplete:!!t.is_complete, parentCompletedAt:t.completed_at,
+        hidden:!!t.is_hidden, completedAt:t.completed_at, contactId:t.contact_id||null,
+        invitedUser:inv ? (inv.invited_email||null) : null, inviteStatus:inv ? inv.status : null,
+        subtasks:subsByTask.get(t.id)||[], showSubtaskComposer:false, shared:false
+      };
+    });
+
+    const sharedMapped = sharedTasks.map(t => ({
+      id:t.id, title:t.title, createdAt:t.created_at, dueDate:t.due_date||'',
+      reminderAt:t.reminder_at||'', category:null, pinned:!!t.is_pinned,
+      parentComplete:!!t.is_complete, parentCompletedAt:t.completed_at, hidden:!!t.is_hidden,
+      completedAt:t.completed_at, contactId:null, invitedUser:null, inviteStatus:'accepted',
+      subtasks:subsByTask.get(t.id)||[], showSubtaskComposer:false, shared:true, ownerUserId:t.user_id
+    }));
 
     const next = {
       categories: categories.filter(c => !c.is_hidden).map(c => c.name),
@@ -2881,28 +2954,9 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
         id:c.id, name:c.name||'', phone:c.phone||'', email:c.email||'',
         createdAt:c.created_at, updatedAt:c.updated_at
       })),
-      tasks: tasks.map(t => {
-        const inv = inviteByTask.get(t.id);
-        return {
-          id:t.id,
-          title:t.title,
-          createdAt:t.created_at,
-          dueDate:t.due_date||'',
-          reminderAt:t.reminder_at||'',
-          category:t.category_id ? (categoryById.get(t.category_id)||null) : null,
-          pinned:!!t.is_pinned,
-          parentComplete:!!t.is_complete,
-          parentCompletedAt:t.completed_at,
-          hidden:!!t.is_hidden,
-          completedAt:t.completed_at,
-          contactId:t.contact_id||null,
-          invitedUser:inv ? (inv.invited_email||null) : null,
-          inviteStatus:inv ? inv.status : null,
-          subtasks:subsByTask.get(t.id)||[],
-          showSubtaskComposer:false
-        };
-      })
+      tasks: [...ownedMapped, ...sharedMapped]
     };
+    updateInvitationUI();
     return normalizeStateShape(next);
   }
 
@@ -2959,7 +3013,8 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
       }
       await deleteStale('contacts','user_id',new Set(contactRows.map(r=>r.id)));
 
-      const taskRows = (state.tasks||[]).map(t=>({
+      const ownedStateTasks = (state.tasks||[]).filter(t=>!t.shared);
+      const taskRows = ownedStateTasks.map(t=>({
         id:t.id, user_id:uid, title:t.title,
         category_id:t.category ? (categoryIdByName.get(t.category)||null) : null,
         contact_id:t.contactId||null,
@@ -2978,7 +3033,7 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
       await deleteStale('tasks','user_id',new Set(taskRows.map(r=>r.id)));
 
       const subRows = [];
-      (state.tasks||[]).forEach(t => (t.subtasks||[]).forEach((st,i)=>subRows.push({
+      ownedStateTasks.forEach(t => (t.subtasks||[]).forEach((st,i)=>subRows.push({
         id:st.id, task_id:t.id, user_id:uid, title:st.title,
         is_complete:!!st.complete, completed_at:st.completedAt||null,
         sort_order:i, created_at:st.createdAt||new Date().toISOString()
@@ -2993,7 +3048,7 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
       // real user-to-user invitation resolution can be added as the next collaboration step.
       const oldInv = await sb.from('task_invites').delete().eq('owner_user_id', uid);
       if (oldInv.error) throw oldInv.error;
-      const inviteRows = (state.tasks||[])
+      const inviteRows = ownedStateTasks
         .filter(t=>t.invitedUser && t.inviteStatus)
         .map(t=>({
           id:crypto.randomUUID(), task_id:t.id, owner_user_id:uid,
@@ -3035,6 +3090,94 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
     return !!((cats.data||[]).length || (contacts.data||[]).length);
   }
 
+
+
+  function pendingReceivedInvites() {
+    return (window.__sfReceivedInvites || []).filter(i=>i.status==='pending');
+  }
+
+  function updateInvitationUI() {
+    const pending = pendingReceivedInvites();
+    const btn = document.getElementById('sfInvitesButton');
+    const count = document.getElementById('sfInviteCount');
+    if (!btn || !count) return;
+    count.textContent = pending.length;
+    btn.hidden = pending.length === 0;
+  }
+
+  async function refreshInvitationsOnly() {
+    if (!activeUser) return;
+    const email=(activeUser.email||'').toLowerCase();
+    const res=await sb.from('task_invites').select('*')
+      .or(`invited_user_id.eq.${activeUser.id},invited_email.ilike.${email}`)
+      .order('created_at',{ascending:false});
+    if (!res.error) {
+      window.__sfReceivedInvites=res.data||[];
+      updateInvitationUI();
+      renderInvitationList();
+    }
+  }
+
+  function renderInvitationList() {
+    const box=document.getElementById('sfInvitesList');
+    if (!box) return;
+    const pending=pendingReceivedInvites();
+    if (!pending.length) {
+      box.innerHTML='<div class="empty">No pending invitations.</div>';
+      return;
+    }
+    box.innerHTML=pending.map(inv=>`
+      <div class="sf-invite-card">
+        <div class="sf-invite-task-title">${escapeHtml(inv.task_title || 'Shared task')}</div>
+        <div class="sf-invite-from">Task invitation</div>
+        <div class="sf-invite-actions">
+          <button class="sf-invite-accept" data-invite-accept="${inv.id}" type="button">Accept</button>
+          <button class="sf-invite-decline" data-invite-decline="${inv.id}" type="button">Decline</button>
+        </div>
+      </div>`).join('');
+    box.querySelectorAll('[data-invite-accept]').forEach(b=>b.addEventListener('click',()=>respondToInvite(b.dataset.inviteAccept,'accepted')));
+    box.querySelectorAll('[data-invite-decline]').forEach(b=>b.addEventListener('click',()=>respondToInvite(b.dataset.inviteDecline,'declined')));
+  }
+
+  async function respondToInvite(id,status) {
+    const {error}=await sb.from('task_invites').update({
+      status,
+      invited_user_id: activeUser.id
+    }).eq('id',id);
+    if (error) { alert(error.message); return; }
+    await refreshInvitationsOnly();
+    if (status==='accepted') {
+      state=await loadCloudState();
+      localStorage.setItem(activeStorageKey,JSON.stringify(state));
+      render();
+    }
+  }
+
+  async function saveSharedCompletion(task) {
+    if (!activeUser || !task?.shared) return;
+    setCloudStatus('Saving…',true);
+    try {
+      const tr=await sb.rpc('set_shared_task_complete',{
+        target_task_id:task.id,
+        new_complete:!!task.parentComplete
+      });
+      if (tr.error) throw tr.error;
+
+      for (const st of (task.subtasks||[])) {
+        const sr=await sb.rpc('set_shared_subtask_complete',{
+          target_subtask_id:st.id,
+          new_complete:!!st.complete
+        });
+        if (sr.error) throw sr.error;
+      }
+
+      localStorage.setItem(activeStorageKey,JSON.stringify(state));
+      setCloudStatus('Saved',true);
+    } catch(err) {
+      console.error(err);
+      setCloudStatus('Saved on device',false);
+    }
+  }
 
   function teardownRealtime() {
     clearTimeout(realtimeReloadTimer);
@@ -3103,6 +3246,11 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
         table: 'task_invites',
         filter: `owner_user_id=eq.${uid}`
       }, scheduleRealtimeReload)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'task_invites'
+      }, async()=>{ await refreshInvitationsOnly(); scheduleRealtimeReload(); })
       .subscribe(status => {
         if (status === 'SUBSCRIBED') setCloudStatus('Saved', true);
         if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
@@ -3204,6 +3352,29 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
     document.body.classList.add('sf-auth-ready');
     document.getElementById('sfAuthPassword').value='';
     setAuthMessage('Signed out.');
+  });
+
+
+  document.getElementById('sfInvitesButton').addEventListener('click',async()=>{
+    await refreshInvitationsOnly();
+    renderInvitationList();
+    document.getElementById('sfInvitesModal').hidden=false;
+  });
+  document.getElementById('sfInvitesClose').addEventListener('click',()=>{
+    document.getElementById('sfInvitesModal').hidden=true;
+  });
+
+
+  document.addEventListener('change', e=>{
+    const cb=e.target.closest('input[type="checkbox"]');
+    if (!cb) return;
+    setTimeout(()=>{
+      const card=cb.closest('.task-card');
+      if (!card) return;
+      const id=card.dataset.id;
+      const t=(state.tasks||[]).find(x=>String(x.id)===String(id));
+      if (t?.shared) saveSharedCompletion(t);
+    },0);
   });
 
   // Resolve an existing session on page load.
