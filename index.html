@@ -3298,10 +3298,10 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
 
   async function respondToInvite(id,status) {
     const current=(window.__sfReceivedInvites||[]).find(i=>i.id===id);
-    const {error}=await sb.from('task_invites').update({
-      status,
-      invited_user_id: activeUser.id
-    }).eq('id',id);
+    const {error}=await sb.rpc('respond_to_task_invite',{
+      target_invite_id:id,
+      response_status:status
+    });
     if (error) throw error;
 
     if (status==='accepted') {
@@ -3365,7 +3365,7 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
       console.error(err);
       buttons.forEach(b=>b.disabled=false);
       btn.textContent=original;
-      alert('Could not update the invitation. Please try again.');
+      alert('Could not update the invitation. ' + (err?.message || 'Please try again.'));
     }
   });
 
