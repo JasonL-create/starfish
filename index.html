@@ -2221,6 +2221,139 @@ body:not(.sf-auth-pending) #floatingNewTask{
 }
 </style>
 
+
+<style id="v79e-mobile-header-summary-dots">
+/* MOBILE HEADER: force logo + account icon to share the same fixed row. */
+@media(max-width:480px){
+  :root{
+    --v79-header-h:calc(74px + env(safe-area-inset-top));
+    --v79-summary-h:50px;
+  }
+
+  .topbar{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) 42px!important;
+    column-gap:12px!important;
+    align-items:center!important;
+    height:var(--v79-header-h)!important;
+    padding:env(safe-area-inset-top) 16px 0!important;
+    box-sizing:border-box!important;
+  }
+
+  .topbar .brand,
+  .topbar .starfish-brand,
+  .topbar .supplied-brand{
+    width:auto!important;
+    height:auto!important;
+    min-width:0!important;
+    margin:0!important;
+    padding:0!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:flex-start!important;
+    text-align:left!important;
+  }
+
+  .supplied-brand-logo{
+    width:150px!important;
+    max-width:52vw!important;
+    margin:0!important;
+  }
+
+  .sf-profile-button{
+    position:relative!important;
+    top:auto!important;
+    right:auto!important;
+    margin:0!important;
+    justify-self:end!important;
+    align-self:center!important;
+    width:40px!important;
+    height:40px!important;
+  }
+
+  .tasks-section-divider{
+    top:var(--v79-header-h)!important;
+    height:var(--v79-summary-h)!important;
+    padding:0 16px!important;
+    display:flex!important;
+    align-items:center!important;
+    box-sizing:border-box!important;
+  }
+
+  .task-age-filters{
+    height:100%!important;
+    min-height:0!important;
+    margin:0!important;
+    padding:0!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:space-between!important;
+    box-sizing:border-box!important;
+  }
+
+  .age-filter-group,
+  .quick-search-toggle{
+    height:100%!important;
+    display:flex!important;
+    align-items:center!important;
+    margin:0!important;
+  }
+
+  .age-filter{
+    display:flex!important;
+    align-items:center!important;
+    height:100%!important;
+    line-height:1!important;
+    padding:0!important;
+    margin:0!important;
+  }
+
+  .quick-search-toggle{
+    line-height:1!important;
+    padding:0!important;
+  }
+
+  .app{
+    padding-top:calc(var(--v79-header-h) + var(--v79-summary-h) + 14px)!important;
+  }
+}
+
+/* TASK MENU: three larger, softer dots in one consistent position. */
+.task-menu-btn.vertical-dots{
+  position:absolute!important;
+  top:16px!important;
+  right:16px!important;
+  width:34px!important;
+  height:34px!important;
+  min-width:34px!important;
+  min-height:34px!important;
+  padding:0!important;
+  margin:0!important;
+  color:transparent!important;
+  font-size:0!important;
+  letter-spacing:0!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+}
+
+.task-menu-btn.vertical-dots::before{
+  content:"•••";
+  display:block;
+  color:#aeb4af;
+  font-size:10px;
+  line-height:1;
+  letter-spacing:3px;
+  transform:rotate(90deg);
+  transform-origin:center;
+}
+
+/* Keep title/subtasks clear of the fixed top-right menu. */
+.task-title{
+  padding-right:46px!important;
+}
+</style>
+
 </head>
 <body class="sf-auth-pending">
 
