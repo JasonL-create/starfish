@@ -2044,6 +2044,21 @@ body.new-task-open #floatingNewTask{display:none!important}
 }
 </style>
 
+
+<style id="v79a-auth-new-task-fix">
+/* Never expose task creation while the authentication screen is active. */
+body:has(#authScreen:not(.hidden)) #floatingNewTask,
+body:has(#authScreen:not([hidden])) #floatingNewTask{
+  display:none!important;
+}
+
+/* Extra guard for the app's existing signed-out state classes/attributes. */
+#authScreen:not(.hidden) ~ #appShell #floatingNewTask,
+#authScreen:not(.hidden) + #appShell #floatingNewTask{
+  display:none!important;
+}
+</style>
+
 </head>
 <body class="sf-auth-pending">
 
@@ -4076,6 +4091,27 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
   if(legacyStatus)observer.observe(legacyStatus,{childList:true,subtree:true,characterData:true});
   if(legacyDot)observer.observe(legacyDot,{attributes:true,attributeFilter:['class','style']});
   syncAccountUI();
+})();
+</script>
+
+
+<script id="v79a-auth-new-task-guard">
+(()=>{
+  const auth=document.getElementById('authScreen');
+  const fab=document.getElementById('floatingNewTask');
+  if(!auth||!fab)return;
+
+  function guardNewTask(){
+    const cs=getComputedStyle(auth);
+    const authVisible=cs.display!=='none' && cs.visibility!=='hidden' && !auth.hidden;
+    fab.style.setProperty('display',authVisible?'none':'flex','important');
+  }
+
+  new MutationObserver(guardNewTask).observe(auth,{
+    attributes:true,
+    attributeFilter:['class','style','hidden']
+  });
+  guardNewTask();
 })();
 </script>
 
