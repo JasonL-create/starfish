@@ -3940,6 +3940,8 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
       }
     });
 
+    const openComposerByTask = new Map((state.tasks||[]).map(task=>[task.id,!!task.showSubtaskComposer]));
+
     const ownedMapped = ownedTasks.map(t => {
       const inv = inviteByTask.get(t.id);
       return {
@@ -3950,7 +3952,7 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
         invitedUser:inv ? (inv.invited_email||null) : null,
         inviteStatus:inv ? inv.status : null,
         inviteId:inv ? inv.id : null,
-        subtasks:subsByTask.get(t.id)||[], showSubtaskComposer:false, shared:false
+        subtasks:subsByTask.get(t.id)||[], showSubtaskComposer:openComposerByTask.get(t.id)||false, shared:false
       };
     });
 
