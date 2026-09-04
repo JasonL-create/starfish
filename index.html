@@ -1665,6 +1665,60 @@ body.sf-auth-ready.sf-auth-pending .sf-auth-screen{visibility:visible!important}
 }
 </style>
 
+
+<style id="v72-shared-task-feedback">
+.sf-shared-meta{
+  margin-top:5px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:12px;
+  color:#5f6d65;
+  font-weight:650;
+}
+.sf-shared-meta svg{width:15px;height:15px;flex:0 0 auto;color:var(--starfish-green,#285f4b)}
+.sf-accepted-invite-card{
+  border:2px solid var(--starfish-green,#285f4b);
+  border-radius:14px;
+  background:rgba(40,95,75,.08);
+  padding:14px 16px;
+  margin:0 0 14px;
+  box-sizing:border-box;
+}
+.sf-accepted-title{
+  display:flex;align-items:center;gap:8px;
+  font-size:16px;font-weight:750;color:var(--starfish-green,#285f4b);
+}
+.sf-accepted-check{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:20px;height:20px;border-radius:50%;
+  background:var(--starfish-green,#285f4b);color:#fff;font-size:13px;
+}
+.sf-accepted-copy{margin-top:4px;font-size:13px;color:#65736a}
+</style>
+
+
+<style id="v73-invite-arrival-decline-feedback">
+.sf-declined-invite-card{
+  border:2px solid var(--starfish-orange,#ff6b45);
+  border-radius:14px;
+  background:rgba(255,107,69,.08);
+  padding:14px 16px;
+  margin:0 0 14px;
+  box-sizing:border-box;
+}
+.sf-declined-title{
+  display:flex;align-items:center;gap:8px;
+  font-size:16px;font-weight:750;color:#d95537;
+}
+.sf-declined-mark{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:20px;height:20px;border-radius:50%;
+  background:var(--starfish-orange,#ff6b45);color:#fff;font-size:13px;
+}
+.sf-declined-copy{margin-top:4px;font-size:13px;color:#65736a}
+</style>
+
 </head>
 <body class="sf-auth-pending">
 
@@ -2083,6 +2137,26 @@ function syncListOptionSummaries(){
   if(viewSummary)viewSummary.textContent=view==='completed'?'Completed':'Current';
 }
 
+
+function acceptedInviteNoticeHtml(){
+  const n=window.__sfAcceptedInviteNotice;
+  if(!n) return '';
+  return `<article class="sf-accepted-invite-card">
+    <div class="sf-accepted-title"><span class="sf-accepted-check">✓</span><span>Task accepted</span></div>
+    <div class="sf-accepted-copy">${escapeHtml(n.owner_email ? `Shared by ${n.owner_email}` : 'The shared task is now in your list.')}</div>
+  </article>`;
+}
+
+
+function declinedInviteNoticeHtml(){
+  const n=window.__sfDeclinedInviteNotice;
+  if(!n) return '';
+  return `<article class="sf-declined-invite-card">
+    <div class="sf-declined-title"><span class="sf-declined-mark">×</span><span>Task declined</span></div>
+    <div class="sf-declined-copy">${escapeHtml(n.owner_email ? `Invitation from ${n.owner_email} was declined.` : 'The invitation was declined.')}</div>
+  </article>`;
+}
+
 function pendingInviteCardsHtml(){
   const pending=(window.__sfReceivedInvites||[]).filter(i=>i.status==='pending');
   return pending.map(inv=>`
@@ -2150,7 +2224,7 @@ function render(){
   });
 
   const list=document.getElementById('taskList');
-  const inviteCards = (!q && view==='current' && ageView==='all') ? pendingInviteCardsHtml() : '';
+  const inviteCards = (!q && view==='current' && ageView==='all') ? (acceptedInviteNoticeHtml()+declinedInviteNoticeHtml()+pendingInviteCardsHtml()) : '';
   if(!tasks.length){
     list.innerHTML=inviteCards + `<div class="empty"><strong>${q?'No matching tasks':view==='current'?'Nothing needs your attention.':'No completed tasks yet.'}</strong>${q?'Try another search term.':view==='current'?'Add a task when something comes up.':'Finished tasks you hide will live here.'}</div>`;
     bindPendingInviteCards();
@@ -2178,7 +2252,10 @@ function taskHtml(t,q){
   return `<article class="task-card ${q&&t.hidden?'search-completed':''} ${overdue?'is-overdue':''}" data-task="${t.id}">
     <div class="task-top">
       <input class="check parent-check" type="checkbox" ${done?'checked':''} aria-label="Complete task">
-      <div class="task-title ${done?'done':''}">${highlight(t.title,q)}${searchStatus}${t.shared?'<div class="sf-shared-readonly">Shared task</div>':''}</div>
+      <div class="task-title ${done?'done':''}">${highlight(t.title,q)}${searchStatus}${t.shared?`<div class="sf-shared-meta">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 11a4 4 0 1 0-8 0 4 4 0 0 0 8 0Zm-10 9c.7-3 2.7-5 6-5s5.3 2 6 5M18 8h4M20 6v4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+  <span>Shared by ${escapeHtml(t.sharedFrom||'another Starfish user')}</span>
+</div>`:''}</div>
       
     </div>
     ${(t.subtasks.length||t.showSubtaskComposer)?`<div class="subtasks">
@@ -2890,6 +2967,7 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
   let realtimeChannel = null;
   let realtimeReloadTimer = null;
   let suppressRealtimeReload = false;
+  let inviteWatchTimer = null;
 
   const originalSave = save;
   save = function() {
@@ -3013,13 +3091,18 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
       };
     });
 
-    const sharedMapped = sharedTasks.map(t => ({
-      id:t.id, title:t.title, createdAt:t.created_at, dueDate:t.due_date||'',
-      reminderAt:t.reminder_at||'', category:null, pinned:!!t.is_pinned,
-      parentComplete:!!t.is_complete, parentCompletedAt:t.completed_at, hidden:!!t.is_hidden,
-      completedAt:t.completed_at, contactId:null, invitedUser:null, inviteStatus:'accepted',
-      subtasks:subsByTask.get(t.id)||[], showSubtaskComposer:false, shared:true, ownerUserId:t.user_id
-    }));
+    const acceptedInviteByTask = new Map(receivedInvites.filter(i=>i.status==='accepted').map(i=>[i.task_id,i]));
+    const sharedMapped = sharedTasks.map(t => {
+      const acceptedInvite = acceptedInviteByTask.get(t.id);
+      return {
+        id:t.id, title:t.title, createdAt:t.created_at, dueDate:t.due_date||'',
+        reminderAt:t.reminder_at||'', category:null, pinned:!!t.is_pinned,
+        parentComplete:!!t.is_complete, parentCompletedAt:t.completed_at, hidden:!!t.is_hidden,
+        completedAt:t.completed_at, contactId:null, invitedUser:null, inviteStatus:'accepted',
+        subtasks:subsByTask.get(t.id)||[], showSubtaskComposer:false, shared:true, ownerUserId:t.user_id,
+        sharedFrom:(acceptedInvite?.owner_email || 'another Starfish user')
+      };
+    });
 
     const next = {
       categories: categories.filter(c => !c.is_hidden).map(c => c.name),
@@ -3126,6 +3209,7 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
         .filter(t=>t.invitedUser && t.inviteStatus)
         .map(t=>({
           id:crypto.randomUUID(), task_id:t.id, owner_user_id:uid,
+          owner_email:(activeUser.email||null),
           invited_email:t.invitedUser, status:t.inviteStatus
         }));
       if (inviteRows.length) {
@@ -3210,16 +3294,45 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
   }
 
   async function respondToInvite(id,status) {
+    const current=(window.__sfReceivedInvites||[]).find(i=>i.id===id);
     const {error}=await sb.from('task_invites').update({
       status,
       invited_user_id: activeUser.id
     }).eq('id',id);
     if (error) { alert(error.message); return; }
-    await refreshInvitationsOnly();
+
     if (status==='accepted') {
+      window.__sfAcceptedInviteNotice = {
+        id,
+        owner_email: current?.owner_email || null
+      };
+      window.__sfDeclinedInviteNotice = null;
+      // Pull the accepted shared task immediately instead of waiting for realtime.
+      await new Promise(r=>setTimeout(r,120));
       state=await loadCloudState();
       localStorage.setItem(activeStorageKey,JSON.stringify(state));
       render();
+      // Keep the green confirmation briefly, then remove it without a refresh.
+      setTimeout(()=>{
+        if(window.__sfAcceptedInviteNotice?.id===id){
+          window.__sfAcceptedInviteNotice=null;
+          render();
+        }
+      },4500);
+    } else {
+      window.__sfDeclinedInviteNotice = {
+        id,
+        owner_email: current?.owner_email || null
+      };
+      window.__sfAcceptedInviteNotice = null;
+      await refreshInvitationsOnly();
+      render();
+      setTimeout(()=>{
+        if(window.__sfDeclinedInviteNotice?.id===id){
+          window.__sfDeclinedInviteNotice=null;
+          render();
+        }
+      },4500);
     }
   }
   window.sfRespondToInvite = respondToInvite;
@@ -3249,6 +3362,30 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
       setCloudStatus('Saved on device',false);
     }
   }
+
+
+  function startInviteWatcher() {
+    stopInviteWatcher();
+    // Realtime remains the primary path; this short fallback check keeps mobile
+    // sessions current if Safari or the websocket misses an invitation insert.
+    inviteWatchTimer = setInterval(()=>{
+      if (activeUser && cloudReady && !document.hidden) refreshInvitationsOnly();
+    }, 5000);
+  }
+
+  function stopInviteWatcher() {
+    if (inviteWatchTimer) {
+      clearInterval(inviteWatchTimer);
+      inviteWatchTimer = null;
+    }
+  }
+
+  document.addEventListener('visibilitychange',()=>{
+    if (!document.hidden && activeUser && cloudReady) refreshInvitationsOnly();
+  });
+  window.addEventListener('focus',()=>{
+    if (activeUser && cloudReady) refreshInvitationsOnly();
+  });
 
   function teardownRealtime() {
     clearTimeout(realtimeReloadTimer);
@@ -3357,6 +3494,7 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
 
       cloudReady = true;
       setupRealtime();
+      startInviteWatcher();
       document.body.classList.remove('sf-auth-pending');
       document.body.classList.remove('sf-auth-ready');
       view='current';
@@ -3373,6 +3511,7 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
         render();
         cloudReady = true;
         setupRealtime();
+        startInviteWatcher();
         setCloudStatus('Saved on device', false);
       } else {
         setAuthMessage('Could not connect to cloud storage. Check your connection and try again.', true);
@@ -3413,6 +3552,7 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
   document.getElementById('sfSignOut').addEventListener('click', async()=>{
     cloudReady=false;
     teardownRealtime();
+    stopInviteWatcher();
     if (activeUser) localStorage.setItem(activeStorageKey, JSON.stringify(state));
     await sb.auth.signOut();
     activeUser=null; activeStorageKey=null;
