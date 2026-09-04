@@ -2597,6 +2597,78 @@ body:not(.sf-auth-pending) #floatingNewTask{
 }
 </style>
 
+
+<style id="v80-navigation-pass">
+.age-filter{
+  position:relative!important;
+}
+.age-filter.active::after{
+  content:"";
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:-7px;
+  height:2px;
+  border-radius:2px;
+  background:var(--starfish-green,#285f4b);
+}
+.overdue-filter.active::after{
+  background:var(--starfish-orange,#ff6b45);
+}
+.quick-search-toggle.search-active,
+.quick-search-toggle.search-active span{
+  color:var(--starfish-orange,#ff6b45)!important;
+}
+.quick-search-toggle.search-active{
+  position:relative;
+}
+.quick-search-toggle.search-active::after{
+  content:"";
+  position:absolute;
+  left:10px;
+  right:0;
+  bottom:-7px;
+  height:2px;
+  border-radius:2px;
+  background:var(--starfish-orange,#ff6b45);
+}
+.direct-choice-select{
+  position:absolute!important;
+  width:1px!important;
+  height:1px!important;
+  opacity:0!important;
+  pointer-events:none!important;
+}
+.direct-choice-list{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  padding:4px 0 8px;
+}
+.direct-choice-list button{
+  width:100%;
+  border:1px solid #e2e7e3;
+  background:#fff;
+  border-radius:10px;
+  padding:11px 13px;
+  text-align:left;
+  color:var(--text);
+  font:inherit;
+  cursor:pointer;
+}
+.direct-choice-list button:hover,
+.direct-choice-list button.selected{
+  background:#f5f8f6;
+  border-color:#cfd8d2;
+}
+.filter-editor.direct-choice-editor{
+  padding-top:6px!important;
+}
+#utilityPanel{
+  overscroll-behavior:contain;
+}
+</style>
+
 </head>
 <body class="sf-auth-pending">
 
@@ -2667,11 +2739,19 @@ body:not(.sf-auth-pending) #floatingNewTask{
 </svg></span><span>View</span></span>
         <span class="details-value option-value-wrap"><span id="viewSummary">Current</span><span class="row-chevron">⌄</span></span>
       </button>
-      <div id="viewEditor" class="filter-editor" hidden>
-        <select id="viewBy" class="tool-select filter-select" aria-label="View tasks">
+      <div id="viewEditor" class="filter-editor direct-choice-editor" hidden>
+        <select id="viewBy" class="tool-select filter-select direct-choice-select" aria-label="View tasks">
           <option value="current">Current</option>
           <option value="completed">Completed</option>
+          <option value="shared-out">Tasks I Shared</option>
+          <option value="shared-in">Tasks Shared With Me</option>
         </select>
+        <div class="direct-choice-list" data-choice-for="viewBy">
+          <button type="button" data-choice="current">Current</button>
+          <button type="button" data-choice="completed">Completed</button>
+          <button type="button" data-choice="shared-out">Tasks I Shared</button>
+          <button type="button" data-choice="shared-in">Tasks Shared With Me</button>
+        </div>
       </div>
       <button id="sortRow" class="list-options-row list-options-button-row" type="button">
         <span class="option-label"><span class="option-icon"><svg class="option-svg" viewBox="0 0 24 24" aria-hidden="true">
@@ -2679,13 +2759,19 @@ body:not(.sf-auth-pending) #floatingNewTask{
 </svg></span><span>Sort by</span></span>
         <span class="details-value option-value-wrap"><span id="sortSummary">Newest</span><span class="row-chevron">⌄</span></span>
       </button>
-      <div id="sortEditor" class="filter-editor" hidden>
-        <select id="sortBy" class="tool-select filter-select" aria-label="Sort tasks">
+      <div id="sortEditor" class="filter-editor direct-choice-editor" hidden>
+        <select id="sortBy" class="tool-select filter-select direct-choice-select" aria-label="Sort tasks">
           <option value="created-desc">Newest</option>
           <option value="created-asc">Oldest</option>
           <option value="due">Due date</option>
           <option value="completed-desc">Recently completed</option>
         </select>
+        <div class="direct-choice-list" data-choice-for="sortBy">
+          <button type="button" data-choice="created-desc">Newest</button>
+          <button type="button" data-choice="created-asc">Oldest</button>
+          <button type="button" data-choice="due">Due Date</button>
+          <button type="button" data-choice="completed-desc">Recently Completed</button>
+        </div>
       </div>
       <button id="filterRow" class="list-options-row list-options-button-row" type="button">
         <span class="option-label"><span class="option-icon"><svg class="option-svg" viewBox="0 0 24 24" aria-hidden="true">
@@ -2693,9 +2779,10 @@ body:not(.sf-auth-pending) #floatingNewTask{
 </svg></span><span>Filter</span></span>
         <span class="details-value option-value-wrap"><span id="filterSummary">All</span><span class="row-chevron">⌄</span></span>
       </button>
-      <div id="filterEditor" class="filter-editor" hidden>
+      <div id="filterEditor" class="filter-editor direct-choice-editor" hidden>
         <label class="filter-section-label">Category</label>
-        <select id="categoryFilter" class="tool-select filter-select" aria-label="Filter tasks"><option value="all">All categories</option><option value="none">No category</option></select>
+        <select id="categoryFilter" class="tool-select filter-select direct-choice-select" aria-label="Filter tasks"><option value="all">All categories</option><option value="none">No category</option></select>
+        <div id="categoryChoiceList" class="direct-choice-list"></div>
       </div>
     </div>
   <button id="collapseOptions" class="collapse-options" type="button" aria-label="Close search and sort">⌃</button>
@@ -3031,7 +3118,10 @@ function syncListOptionSummaries(){
   const sortSummary=document.getElementById('sortSummary');
   if(sort&&sortSummary)sortSummary.textContent=sort.options[sort.selectedIndex]?.text||'Newest';
   const viewSummary=document.getElementById('viewSummary');
-  if(viewSummary)viewSummary.textContent=view==='completed'?'Completed':'Current';
+  if(viewSummary)viewSummary.textContent=
+    view==='completed'?'Completed':
+    view==='shared-out'?'Tasks I Shared':
+    view==='shared-in'?'Tasks Shared With Me':'Current';
 }
 
 
@@ -3111,7 +3201,10 @@ function render(){
         || !!(c && [c.name,c.phone,c.email].some(v=>(v||'').toLowerCase().includes(q)));
     });
   }else{
-    tasks=tasks.filter(t=>view==='current'?!t.hidden:t.hidden);
+    if(view==='current') tasks=tasks.filter(t=>!t.hidden);
+    else if(view==='completed') tasks=tasks.filter(t=>t.hidden);
+    else if(view==='shared-out') tasks=tasks.filter(t=>!t.hidden && !t.shared && !!t.invitedUser);
+    else if(view==='shared-in') tasks=tasks.filter(t=>!t.hidden && !!t.shared);
   }
   if(cat!=='all') tasks=tasks.filter(t=>cat==='none'?!t.category:t.category===cat);
 
@@ -3140,7 +3233,15 @@ function render(){
   const list=document.getElementById('taskList');
   const inviteCards = (!q && view==='current' && ageView==='all') ? (ownerDeclineNoticeHtml()+acceptedInviteNoticeHtml()+declinedInviteNoticeHtml()+pendingInviteCardsHtml()) : '';
   if(!tasks.length){
-    list.innerHTML=inviteCards + `<div class="empty"><strong>${q?'No matching tasks':view==='current'?'Nothing needs your attention.':'No completed tasks yet.'}</strong>${q?'Try another search term.':view==='current'?'Add a task when something comes up.':'Finished tasks you hide will live here.'}</div>`;
+    const emptyTitle=q?'No matching tasks':
+      view==='current'?'Nothing needs your attention.':
+      view==='completed'?'No completed tasks yet.':
+      view==='shared-out'?'No tasks shared by you.':'No tasks shared with you.';
+    const emptyCopy=q?'Try another search term.':
+      view==='current'?'Add a task when something comes up.':
+      view==='completed'?'Finished tasks you hide will live here.':
+      view==='shared-out'?'Tasks you invite someone to will appear here.':'Accepted shared tasks will appear here.';
+    list.innerHTML=inviteCards + `<div class="empty"><strong>${emptyTitle}</strong>${emptyCopy}</div>`;
     bindPendingInviteCards();
     return;
   }
@@ -3207,6 +3308,16 @@ function renderFilters(){
     summary.textContent=sel.value==='all'?'All':sel.value==='none'?'No category':sel.value;
   }
   const hs=document.getElementById('hideCategorySelect');if(hs)hs.innerHTML=state.categories.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+
+  const choiceList=document.getElementById('categoryChoiceList');
+  if(choiceList){
+    const choices=[['all','All categories'],['none','No category'],...state.categories.map(c=>[c,c])];
+    choiceList.innerHTML=choices.map(([value,label])=>`<button type="button" data-category-choice="${esc(value)}" class="${sel.value===value?'selected':''}">${esc(label)}</button>`).join('');
+    choiceList.querySelectorAll('[data-category-choice]').forEach(btn=>btn.addEventListener('click',()=>{
+      sel.value=btn.dataset.categoryChoice;
+      sel.dispatchEvent(new Event('change',{bubbles:true}));
+    }));
+  }
 }
 
 function bindTaskEvents(){
@@ -3288,22 +3399,52 @@ function setActiveTab(){
   const v=document.getElementById('viewBy');
   if(v)v.value=view;
   const summary=document.getElementById('viewSummary');
-  if(summary)summary.textContent=view==='completed'?'Completed':'Current';
+  if(summary)summary.textContent=
+    view==='completed'?'Completed':
+    view==='shared-out'?'Tasks I Shared':
+    view==='shared-in'?'Tasks Shared With Me':'Current';
 }
 
 document.querySelectorAll('.age-filter').forEach(btn=>btn.addEventListener('click',()=>{
+  if(btn.dataset.ageView==='all'){
+    ageView='all';
+    view='current';
+    const search=document.getElementById('search');
+    const cat=document.getElementById('categoryFilter');
+    if(search) search.value='';
+    if(cat) cat.value='all';
+    setActiveTab();
+    closeUtilityPanel();
+    render();
+    return;
+  }
   ageView=btn.dataset.ageView;
   view='current';
   setActiveTab();
   render();
 }));
 
+function closeUtilityPanel(){
+  const p=document.getElementById('utilityPanel'), b=document.getElementById('utilityToggle');
+  if(p) p.classList.add('collapsed');
+  if(b) b.setAttribute('aria-expanded','false');
+}
+function updateSearchState(){
+  const search=document.getElementById('search');
+  const toggle=document.getElementById('utilityToggle');
+  const active=!!search?.value.trim();
+  if(toggle){
+    toggle.classList.toggle('search-active',active);
+    const label=toggle.querySelector('span');
+    if(label) label.textContent=active?'SEARCHING':'SEARCH';
+  }
+}
 document.getElementById('utilityToggle').addEventListener('click',()=>{
  const p=document.getElementById('utilityPanel'), b=document.getElementById('utilityToggle');
  const opening=p.classList.contains('collapsed');
  p.classList.toggle('collapsed');
  b.setAttribute('aria-expanded',opening?'true':'false');
- const chev=b.querySelector('.utility-chevron'); if(chev)chev.textContent=opening?'⌃':'⌄';
+ if(opening) setTimeout(()=>document.getElementById('search')?.focus(),20);
 });
 
 
@@ -3555,7 +3696,15 @@ document.getElementById('viewBy').addEventListener('change',e=>{
   document.getElementById('viewEditor').hidden=true;
   render();
 });
-document.getElementById('search').addEventListener('input',render);
+let searchCollapseTimer=null;
+document.getElementById('search').addEventListener('input',()=>{
+  updateSearchState();
+  render();
+  clearTimeout(searchCollapseTimer);
+  if(document.getElementById('search').value.trim()){
+    searchCollapseTimer=setTimeout(()=>closeUtilityPanel(),350);
+  }
+});
 document.getElementById('categoryFilter').addEventListener('change',e=>{
   document.getElementById('filterEditor').hidden=true;
   render();
@@ -3564,6 +3713,17 @@ document.getElementById('sortBy').addEventListener('change',e=>{
   document.getElementById('sortSummary').textContent=e.target.options[e.target.selectedIndex].text;
   document.getElementById('sortEditor').hidden=true;
   render();
+});
+
+document.querySelectorAll('.direct-choice-list[data-choice-for]').forEach(list=>{
+  list.addEventListener('click',e=>{
+    const btn=e.target.closest('button[data-choice]');
+    if(!btn)return;
+    const select=document.getElementById(list.dataset.choiceFor);
+    if(!select)return;
+    select.value=btn.dataset.choice;
+    select.dispatchEvent(new Event('change',{bubbles:true}));
+  });
 });
 
 
