@@ -2354,6 +2354,79 @@ body:not(.sf-auth-pending) #floatingNewTask{
 }
 </style>
 
+
+<style id="v79f-desktop-centering-dots">
+/* Center the Tasks/Search strip vertically on ALL screen sizes. */
+.tasks-section-divider{
+  display:flex!important;
+  align-items:center!important;
+  padding-top:0!important;
+  padding-bottom:0!important;
+}
+.task-age-filters{
+  height:100%!important;
+  min-height:0!important;
+  margin:0!important;
+  padding:0!important;
+  display:flex!important;
+  align-items:center!important;
+}
+.age-filter-group,
+.quick-search-toggle{
+  height:100%!important;
+  display:flex!important;
+  align-items:center!important;
+  margin:0!important;
+}
+.age-filter{
+  height:100%!important;
+  display:flex!important;
+  align-items:center!important;
+  padding-top:0!important;
+  padding-bottom:0!important;
+  line-height:1!important;
+}
+
+/* Simpler three-dot treatment: larger individual light-gray dots,
+   consistently anchored near the card's top-right corner. */
+.task-menu-btn.vertical-dots{
+  position:absolute!important;
+  top:15px!important;
+  right:16px!important;
+  width:36px!important;
+  height:36px!important;
+  min-width:36px!important;
+  min-height:36px!important;
+  padding:0!important;
+  margin:0!important;
+  color:#b0b6b1!important;
+  background:transparent!important;
+  border:0!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  font-size:0!important;
+  letter-spacing:0!important;
+  line-height:1!important;
+}
+
+.task-menu-btn.vertical-dots::before{
+  content:"";
+  width:5px;
+  height:5px;
+  border-radius:50%;
+  background:currentColor;
+  box-shadow:0 -9px 0 currentColor, 0 9px 0 currentColor;
+  display:block;
+  transform:none!important;
+}
+
+/* Keep a clean text gutter so the menu does not visually drift with content length. */
+.task-title{
+  padding-right:52px!important;
+}
+</style>
+
 </head>
 <body class="sf-auth-pending">
 
