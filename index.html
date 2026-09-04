@@ -4559,18 +4559,26 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
 <script id="v79b-auth-button-guard">
 (()=>{
   const fab=document.getElementById('floatingNewTask');
+  const modal=document.getElementById('newTaskModal');
   if(!fab)return;
 
-  function syncFabToAuthState(){
+  function syncFabVisibility(){
     const signedOut=document.body.classList.contains('sf-auth-pending');
-    fab.style.setProperty('display', signedOut ? 'none' : 'flex', 'important');
+    const newTaskOpen=document.body.classList.contains('new-task-open') || modal?.classList.contains('open');
+    fab.style.setProperty('display', (signedOut || newTaskOpen) ? 'none' : 'flex', 'important');
   }
 
-  new MutationObserver(syncFabToAuthState).observe(document.body,{
+  new MutationObserver(syncFabVisibility).observe(document.body,{
     attributes:true,
     attributeFilter:['class']
   });
-  syncFabToAuthState();
+  if(modal){
+    new MutationObserver(syncFabVisibility).observe(modal,{
+      attributes:true,
+      attributeFilter:['class']
+    });
+  }
+  syncFabVisibility();
 })();
 </script>
 
