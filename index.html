@@ -3282,10 +3282,18 @@ function addNewTaskSubtaskRow(){
 function openNewTaskModal(){
   resetNewTaskModal();
   document.getElementById('newTaskModal').classList.add('open');
+  document.body.classList.add('new-task-open');
+  const fixedNewTask=document.getElementById('floatingNewTask');
+  if(fixedNewTask) fixedNewTask.style.setProperty('display','none','important');
   setTimeout(()=>document.getElementById('newTaskTitle').focus(),0);
 }
 function closeNewTaskModal(){
   document.getElementById('newTaskModal').classList.remove('open');
+  document.body.classList.remove('new-task-open');
+  const fixedNewTask=document.getElementById('floatingNewTask');
+  if(fixedNewTask && !document.body.classList.contains('sf-auth-pending')){
+    fixedNewTask.style.setProperty('display','flex','important');
+  }
 }
 document.getElementById('openNewTask').addEventListener('click',openNewTaskModal);
 const floatingNewTask=document.getElementById('floatingNewTask');
