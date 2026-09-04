@@ -2172,12 +2172,7 @@ function pendingInviteCardsHtml(){
 }
 
 function bindPendingInviteCards(){
-  document.querySelectorAll('#taskList [data-invite-accept]').forEach(btn=>{
-    btn.addEventListener('click',()=>window.sfRespondToInvite?.(btn.dataset.inviteAccept,'accepted'));
-  });
-  document.querySelectorAll('#taskList [data-invite-decline]').forEach(btn=>{
-    btn.addEventListener('click',()=>window.sfRespondToInvite?.(btn.dataset.inviteDecline,'declined'));
-  });
+  // Invitation buttons are handled by one delegated listener in the cloud layer.
 }
 
 function render(){
@@ -3264,12 +3259,20 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
     const res=await sb.from('task_invites').select('*')
       .or(`invited_user_id.eq.${activeUser.id},invited_email.ilike.${email}`)
       .order('created_at',{ascending:false});
-    if (!res.error) {
-      window.__sfReceivedInvites=res.data||[];
-      updateInvitationUI();
-      renderInvitationList();
-      if (cloudReady) render();
+    if (res.error) {
+      console.warn('Invite refresh failed', res.error);
+      return;
     }
+
+    const next=res.data||[];
+    const prev=window.__sfReceivedInvites||[];
+    const prevKey=prev.map(i=>`${i.id}:${i.status}:${i.updated_at||''}`).join('|');
+    const nextKey=next.map(i=>`${i.id}:${i.status}:${i.updated_at||''}`).join('|');
+
+    window.__sfReceivedInvites=next;
+    updateInvitationUI();
+
+    if (cloudReady && prevKey!==nextKey) render();
   }
 
   function renderInvitationList() {
@@ -3299,7 +3302,7 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
       status,
       invited_user_id: activeUser.id
     }).eq('id',id);
-    if (error) { alert(error.message); return; }
+    if (error) throw error;
 
     if (status==='accepted') {
       window.__sfAcceptedInviteNotice = {
@@ -3337,6 +3340,36 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
   }
   window.sfRespondToInvite = respondToInvite;
 
+  document.addEventListener('click', async e=>{
+    const accept=e.target.closest('[data-invite-accept]');
+    const decline=e.target.closest('[data-invite-decline]');
+    const btn=accept||decline;
+    if(!btn || !btn.closest('#taskList')) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    const card=btn.closest('.sf-pending-invite-card');
+    const buttons=card ? card.querySelectorAll('button') : [];
+    buttons.forEach(b=>b.disabled=true);
+
+    const original=btn.textContent;
+    btn.textContent=accept ? 'Accepting…' : 'Declining…';
+
+    try{
+      await respondToInvite(
+        accept ? accept.dataset.inviteAccept : decline.dataset.inviteDecline,
+        accept ? 'accepted' : 'declined'
+      );
+    }catch(err){
+      console.error(err);
+      buttons.forEach(b=>b.disabled=false);
+      btn.textContent=original;
+      alert('Could not update the invitation. Please try again.');
+    }
+  });
+
+
   async function saveSharedCompletion(task) {
     if (!activeUser || !task?.shared) return;
     setCloudStatus('Saving…',true);
@@ -3370,7 +3403,7 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
     // sessions current if Safari or the websocket misses an invitation insert.
     inviteWatchTimer = setInterval(()=>{
       if (activeUser && cloudReady && !document.hidden) refreshInvitationsOnly();
-    }, 5000);
+    }, 2000);
   }
 
   function stopInviteWatcher() {
@@ -3495,6 +3528,7 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
       cloudReady = true;
       setupRealtime();
       startInviteWatcher();
+      await refreshInvitationsOnly();
       document.body.classList.remove('sf-auth-pending');
       document.body.classList.remove('sf-auth-ready');
       view='current';
