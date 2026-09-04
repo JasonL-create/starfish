@@ -2099,10 +2099,10 @@ function pendingInviteCardsHtml(){
 
 function bindPendingInviteCards(){
   document.querySelectorAll('#taskList [data-invite-accept]').forEach(btn=>{
-    btn.addEventListener('click',()=>respondToInvite(btn.dataset.inviteAccept,'accepted'));
+    btn.addEventListener('click',()=>window.sfRespondToInvite?.(btn.dataset.inviteAccept,'accepted'));
   });
   document.querySelectorAll('#taskList [data-invite-decline]').forEach(btn=>{
-    btn.addEventListener('click',()=>respondToInvite(btn.dataset.inviteDecline,'declined'));
+    btn.addEventListener('click',()=>window.sfRespondToInvite?.(btn.dataset.inviteDecline,'declined'));
   });
 }
 
@@ -3222,6 +3222,7 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
       render();
     }
   }
+  window.sfRespondToInvite = respondToInvite;
 
   async function saveSharedCompletion(task) {
     if (!activeUser || !task?.shared) return;
