@@ -2143,7 +2143,7 @@ function acceptedInviteNoticeHtml(){
   if(!n) return '';
   return `<article class="sf-accepted-invite-card">
     <div class="sf-accepted-title"><span class="sf-accepted-check">✓</span><span>Task accepted</span></div>
-    <div class="sf-accepted-copy">${escapeHtml(n.owner_email ? `Shared by ${n.owner_email}` : 'The shared task is now in your list.')}</div>
+    <div class="sf-accepted-copy">${esc(n.owner_email ? `Shared by ${n.owner_email}` : 'The shared task is now in your list.')}</div>
   </article>`;
 }
 
@@ -2153,7 +2153,7 @@ function declinedInviteNoticeHtml(){
   if(!n) return '';
   return `<article class="sf-declined-invite-card">
     <div class="sf-declined-title"><span class="sf-declined-mark">×</span><span>Task declined</span></div>
-    <div class="sf-declined-copy">${escapeHtml(n.owner_email ? `Invitation from ${n.owner_email} was declined.` : 'The invitation was declined.')}</div>
+    <div class="sf-declined-copy">${esc(n.owner_email ? `Invitation from ${n.owner_email} was declined.` : 'The invitation was declined.')}</div>
   </article>`;
 }
 
@@ -2249,7 +2249,7 @@ function taskHtml(t,q){
       <input class="check parent-check" type="checkbox" ${done?'checked':''} aria-label="Complete task">
       <div class="task-title ${done?'done':''}">${highlight(t.title,q)}${searchStatus}${t.shared?`<div class="sf-shared-meta">
   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 11a4 4 0 1 0-8 0 4 4 0 0 0 8 0Zm-10 9c.7-3 2.7-5 6-5s5.3 2 6 5M18 8h4M20 6v4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-  <span>Shared by ${escapeHtml(t.sharedFrom||'another Starfish user')}</span>
+  <span>Shared by ${esc(t.sharedFrom||'another Starfish user')}</span>
 </div>`:''}</div>
       
     </div>
@@ -3285,7 +3285,7 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
     }
     box.innerHTML=pending.map(inv=>`
       <div class="sf-invite-card">
-        <div class="sf-invite-task-title">${escapeHtml(inv.task_title || 'Shared task')}</div>
+        <div class="sf-invite-task-title">${esc(inv.task_title || 'Shared task')}</div>
         <div class="sf-invite-from">Task invitation</div>
         <div class="sf-invite-actions">
           <button class="sf-invite-accept" data-invite-accept="${inv.id}" type="button">Accept</button>
@@ -3508,9 +3508,10 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
     setCloudStatus('Connecting…', true);
 
     const cache = readUserCache(user.id);
+
+    // Cloud/data loading only. If this fails, use that user's local cache.
     try {
       const hasCloud = await cloudHasData();
-      const migratedFlag = localStorage.getItem('starfish-legacy-migrated') === '1';
 
       if (hasCloud) {
         state = await loadCloudState();
@@ -3519,38 +3520,33 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
         state = normalizeStateShape(cache);
         await syncStateToCloud();
       } else {
-        // New Starfish accounts always start clean. Existing cloud accounts still
-        // load their own saved data above.
         state = normalizeStateShape({categories:[],hiddenCategories:[],contacts:[],tasks:[]});
         localStorage.setItem(activeStorageKey, JSON.stringify(state));
       }
-
-      cloudReady = true;
-      setupRealtime();
-      startInviteWatcher();
-      await refreshInvitationsOnly();
-      document.body.classList.remove('sf-auth-pending');
-      document.body.classList.remove('sf-auth-ready');
-      view='current';
-      ageView='all';
-      setActiveTab();
-      render();
-      setCloudStatus('Saved', true);
     } catch (err) {
       console.error('Starfish cloud load failed', err);
       if (cache) {
         state = normalizeStateShape(cache);
-        document.body.classList.remove('sf-auth-pending');
-        document.body.classList.remove('sf-auth-ready');
-        render();
-        cloudReady = true;
-        setupRealtime();
-        startInviteWatcher();
         setCloudStatus('Saved on device', false);
       } else {
         setAuthMessage('Could not connect to cloud storage. Check your connection and try again.', true);
+        return;
       }
     }
+
+    // UI startup is intentionally outside the cloud-load fallback above.
+    // A display bug must never replace current cloud data with stale cached tasks.
+    cloudReady = true;
+    setupRealtime();
+    startInviteWatcher();
+    await refreshInvitationsOnly();
+    document.body.classList.remove('sf-auth-pending');
+    document.body.classList.remove('sf-auth-ready');
+    view='current';
+    ageView='all';
+    setActiveTab();
+    render();
+    setCloudStatus('Saved', true);
   }
 
   async function signIn() {
