@@ -2737,6 +2737,17 @@ body:not(.sf-auth-pending) #floatingNewTask{
 }
 </style>
 
+
+<style id="v80b-search-stack-css">
+/* Search/options panel remains open while typing; results are pushed below it instead of hidden behind it. */
+#utilityPanel{
+  overflow:auto!important;
+}
+.active-filter-status{
+  transition:margin-top .12s ease;
+}
+</style>
+
 </head>
 <body class="sf-auth-pending">
 
@@ -3830,14 +3841,9 @@ document.getElementById('viewBy').addEventListener('change',e=>{
   document.getElementById('viewEditor').hidden=true;
   render();
 });
-let searchCollapseTimer=null;
 document.getElementById('search').addEventListener('input',()=>{
   updateSearchState();
   render();
-  clearTimeout(searchCollapseTimer);
-  if(document.getElementById('search').value.trim()){
-    searchCollapseTimer=setTimeout(()=>closeUtilityPanel(),350);
-  }
 });
 document.getElementById('categoryFilter').addEventListener('change',e=>{
   document.getElementById('filterEditor').hidden=true;
@@ -4983,6 +4989,43 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
     });
   }
   syncFabVisibility();
+})();
+</script>
+
+
+<script id="v80b-search-results-stack">
+(()=>{
+  const panel=document.getElementById('utilityPanel');
+  const list=document.getElementById('taskList');
+  const status=document.getElementById('activeFilterStatus');
+  if(!panel||!list)return;
+
+  function syncSearchStack(){
+    const open=!panel.classList.contains('collapsed') && getComputedStyle(panel).display!=='none';
+    const h=open ? Math.ceil(panel.getBoundingClientRect().height) : 0;
+
+    // Keep both the filter-status line and task results below the open panel.
+    if(status){
+      status.style.marginTop = open ? `${h + 8}px` : '';
+    }else{
+      list.style.marginTop = open ? `${h + 8}px` : '';
+    }
+
+    if(status){
+      list.style.marginTop = '';
+    }
+  }
+
+  const ro=new ResizeObserver(syncSearchStack);
+  ro.observe(panel);
+
+  new MutationObserver(syncSearchStack).observe(panel,{
+    attributes:true,
+    attributeFilter:['class','style']
+  });
+
+  window.addEventListener('resize',syncSearchStack);
+  syncSearchStack();
 })();
 </script>
 
