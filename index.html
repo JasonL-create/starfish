@@ -1719,6 +1719,73 @@ body.sf-auth-ready.sf-auth-pending .sf-auth-screen{visibility:visible!important}
 .sf-declined-copy{margin-top:4px;font-size:13px;color:#65736a}
 </style>
 
+
+<style id="v78-owner-invite-feedback">
+.invite-indicator.invite-accepted{
+  color:var(--starfish-green,#285f4b)!important;
+  font-weight:650;
+}
+.invite-accepted-check{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:15px;
+  height:15px;
+  border-radius:50%;
+  background:var(--starfish-green,#285f4b);
+  color:#fff;
+  font-size:10px;
+  font-weight:800;
+  line-height:1;
+  flex:0 0 auto;
+}
+.sf-owner-decline-card{
+  border:2px solid var(--starfish-orange,#ff6b45);
+  border-radius:14px;
+  background:rgba(255,107,69,.08);
+  padding:16px;
+  margin:0 0 14px;
+  box-sizing:border-box;
+}
+.sf-owner-decline-title{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:17px;
+  font-weight:750;
+  color:#d95537;
+  margin-bottom:5px;
+}
+.sf-owner-decline-mark{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:20px;
+  height:20px;
+  border-radius:50%;
+  background:var(--starfish-orange,#ff6b45);
+  color:#fff;
+  font-size:13px;
+  font-weight:800;
+}
+.sf-owner-decline-copy{
+  font-size:13px;
+  color:#65736a;
+  margin-bottom:12px;
+}
+.sf-owner-decline-ack{
+  width:100%;
+  min-height:42px;
+  border:1px solid var(--starfish-orange,#ff6b45);
+  border-radius:9px;
+  background:#fff;
+  color:#d95537;
+  font:inherit;
+  font-weight:700;
+  cursor:pointer;
+}
+</style>
+
 </head>
 <body class="sf-auth-pending">
 
@@ -2138,6 +2205,23 @@ function syncListOptionSummaries(){
 }
 
 
+
+function ownerDeclineNoticeHtml(){
+  const declines=window.__sfOwnerDeclines||[];
+  return declines.map(inv=>`
+    <article class="sf-owner-decline-card" data-owner-decline="${inv.id}">
+      <div class="sf-owner-decline-title">
+        <span class="sf-owner-decline-mark">×</span>
+        <span>Task invitation declined</span>
+      </div>
+      <div class="sf-owner-decline-copy">
+        ${esc(inv.invited_email||'The invited user')} declined <strong>${esc(inv.task_title||'your task')}</strong>.
+      </div>
+      <button class="sf-owner-decline-ack" type="button" data-decline-ack="${inv.id}">Acknowledge</button>
+    </article>
+  `).join('');
+}
+
 function acceptedInviteNoticeHtml(){
   const n=window.__sfAcceptedInviteNotice;
   if(!n) return '';
@@ -2172,7 +2256,12 @@ function pendingInviteCardsHtml(){
 }
 
 function bindPendingInviteCards(){
-  // Invitation buttons are handled by one delegated listener in the cloud layer.
+  document.querySelectorAll('#taskList [data-decline-ack]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      window.sfAcknowledgeOwnerDecline?.(btn.dataset.declineAck);
+    });
+  });
+  // Incoming invitation Accept/Decline buttons are handled in the cloud layer.
 }
 
 function render(){
@@ -2219,7 +2308,7 @@ function render(){
   });
 
   const list=document.getElementById('taskList');
-  const inviteCards = (!q && view==='current' && ageView==='all') ? (acceptedInviteNoticeHtml()+declinedInviteNoticeHtml()+pendingInviteCardsHtml()) : '';
+  const inviteCards = (!q && view==='current' && ageView==='all') ? (ownerDeclineNoticeHtml()+acceptedInviteNoticeHtml()+declinedInviteNoticeHtml()+pendingInviteCardsHtml()) : '';
   if(!tasks.length){
     list.innerHTML=inviteCards + `<div class="empty"><strong>${q?'No matching tasks':view==='current'?'Nothing needs your attention.':'No completed tasks yet.'}</strong>${q?'Try another search term.':view==='current'?'Add a task when something comes up.':'Finished tasks you hide will live here.'}</div>`;
     bindPendingInviteCards();
@@ -2271,7 +2360,7 @@ function taskHtml(t,q){
         ${t.dueDate?`<span class="task-indicator due-indicator ${overdue?'overdue':''}">${overdue?'Overdue':'Due'}: ${new Date(t.dueDate+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric'})}</span>`:''}
       </div>
       <div class="task-status-block">
-        ${t.invitedUser?`<span class="task-indicator invite-indicator"><svg class="indicator-svg person-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7" r="4" fill="currentColor"></circle><path d="M5 21c.5-5 3.1-8 7-8s6.5 3 7 8H5z" fill="currentColor"></path></svg><span>${esc(t.invitedUser)}</span></span>`:''}
+        ${t.invitedUser?`<span class="task-indicator invite-indicator ${t.inviteStatus==='accepted'?'invite-accepted':''}"><svg class="indicator-svg person-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7" r="4" fill="currentColor"></circle><path d="M5 21c.5-5 3.1-8 7-8s6.5 3 7 8H5z" fill="currentColor"></path></svg><span>${esc(t.invitedUser)}</span>${t.inviteStatus==='accepted'?'<span class="invite-accepted-check" aria-label="Accepted">✓</span>':''}</span>`:''}
       </div>
     </div>`:''}
     ${fully&&!t.hidden&&!t.shared?`<div class="hide-prompt"><span>Everything is checked. <strong>Ready to hide?</strong></span><div class="prompt-actions"><button class="keep" type="button">Keep visible</button><button class="hide-confirm" type="button">Hide</button></div></div>`:''}
@@ -3041,6 +3130,13 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
     const receivedInvites = receivedInvitesRes.data || [];
 
     window.__sfReceivedInvites = receivedInvites;
+    const ownedTaskTitleById = new Map(ownedTasks.map(t=>[t.id,t.title]));
+    window.__sfOwnerDeclines = ownedInvites
+      .filter(inv=>inv.status==='declined')
+      .map(inv=>({
+        ...inv,
+        task_title:ownedTaskTitleById.get(inv.task_id)||'Task'
+      }));
 
     const acceptedTaskIds = [...new Set(receivedInvites.filter(i=>i.status==='accepted').map(i=>i.task_id))];
     let sharedTasks = [];
@@ -3222,10 +3318,13 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
         if (upInv.error) throw upInv.error;
       }
 
+      const inviteIdsToKeep = new Set(inviteRows.map(r=>r.id));
+      (window.__sfOwnerDeclines||[]).forEach(inv=>inviteIdsToKeep.add(inv.id));
+
       await deleteStale(
         'task_invites',
         'owner_user_id',
-        new Set(inviteRows.map(r=>r.id))
+        inviteIdsToKeep
       );
 
       localStorage.setItem(activeStorageKey, JSON.stringify(state));
@@ -3355,6 +3454,25 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
     }
   }
   window.sfRespondToInvite = respondToInvite;
+
+  async function acknowledgeOwnerDecline(inviteId){
+    const row=(window.__sfOwnerDeclines||[]).find(i=>i.id===inviteId);
+    if(!row) return;
+
+    const {error}=await sb.from('task_invites')
+      .delete()
+      .eq('id',inviteId)
+      .eq('owner_user_id',activeUser.id);
+
+    if(error){
+      alert('Could not acknowledge the declined invitation. ' + (error.message||'Please try again.'));
+      return;
+    }
+
+    window.__sfOwnerDeclines=(window.__sfOwnerDeclines||[]).filter(i=>i.id!==inviteId);
+    render();
+  }
+  window.sfAcknowledgeOwnerDecline=acknowledgeOwnerDecline;
 
   document.addEventListener('click', async e=>{
     const accept=e.target.closest('[data-invite-accept]');
