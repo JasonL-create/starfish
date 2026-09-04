@@ -2588,6 +2588,7 @@ document.getElementById('createNewTask').addEventListener('click',()=>{
     category:(document.getElementById('newTaskCategory').value==='__create_new__'?'':document.getElementById('newTaskCategory').value)||null,
     invitedUser:document.getElementById('newTaskInvite').dataset.confirmed||null,
     inviteStatus:document.getElementById('newTaskInvite').dataset.confirmed?'pending':null,
+    inviteId:document.getElementById('newTaskInvite').dataset.confirmed?crypto.randomUUID():null,
     contactId:newContact?newContact.id:null,
     parentComplete:false,
     parentCompletedAt:null,
@@ -2813,12 +2814,14 @@ document.getElementById('detailSendInvite').addEventListener('click',()=>{
   const sel=document.getElementById('detailInvite');
   const name=sel.value;
   if(!name||name==='__new__')return;
-  t.invitedUser=name;t.inviteStatus='pending';
+  t.invitedUser=name;
+  t.inviteStatus='pending';
+  t.inviteId=t.inviteId||crypto.randomUUID();
   save();render();openTaskDetails(t.id);
 });
 document.getElementById('detailCancelInvite').addEventListener('click',()=>{
   const t=findTask(detailTaskId);if(!t)return;
-  t.invitedUser=null;t.inviteStatus=null;
+  t.invitedUser=null;t.inviteStatus=null;t.inviteId=null;
   save();render();openTaskDetails(t.id);
 });
 
@@ -3081,7 +3084,9 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
         reminderAt:t.reminder_at||'', category:t.category_id ? (categoryById.get(t.category_id)||null) : null,
         pinned:!!t.is_pinned, parentComplete:!!t.is_complete, parentCompletedAt:t.completed_at,
         hidden:!!t.is_hidden, completedAt:t.completed_at, contactId:t.contact_id||null,
-        invitedUser:inv ? (inv.invited_email||null) : null, inviteStatus:inv ? inv.status : null,
+        invitedUser:inv ? (inv.invited_email||null) : null,
+        inviteStatus:inv ? inv.status : null,
+        inviteId:inv ? inv.id : null,
         subtasks:subsByTask.get(t.id)||[], showSubtaskComposer:false, shared:false
       };
     });
@@ -3196,21 +3201,32 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
       }
       await deleteStale('subtasks','user_id',new Set(subRows.map(r=>r.id)));
 
-      // Current prototype stores an invitee label/name. Keep it synced now;
-      // real user-to-user invitation resolution can be added as the next collaboration step.
-      const oldInv = await sb.from('task_invites').delete().eq('owner_user_id', uid);
-      if (oldInv.error) throw oldInv.error;
+      // Keep invitation rows stable. Do not delete/recreate every invite on every save:
+      // that could make a pending invitation briefly disappear on the receiver's device.
       const inviteRows = ownedStateTasks
         .filter(t=>t.invitedUser && t.inviteStatus)
-        .map(t=>({
-          id:crypto.randomUUID(), task_id:t.id, owner_user_id:uid,
-          owner_email:(activeUser.email||null),
-          invited_email:t.invitedUser, status:t.inviteStatus
-        }));
+        .map(t=>{
+          if(!t.inviteId) t.inviteId=crypto.randomUUID();
+          return {
+            id:t.inviteId,
+            task_id:t.id,
+            owner_user_id:uid,
+            owner_email:(activeUser.email||null),
+            invited_email:t.invitedUser,
+            status:t.inviteStatus
+          };
+        });
+
       if (inviteRows.length) {
-        const ins = await sb.from('task_invites').insert(inviteRows);
-        if (ins.error) throw ins.error;
+        const upInv = await sb.from('task_invites').upsert(inviteRows);
+        if (upInv.error) throw upInv.error;
       }
+
+      await deleteStale(
+        'task_invites',
+        'owner_user_id',
+        new Set(inviteRows.map(r=>r.id))
+      );
 
       localStorage.setItem(activeStorageKey, JSON.stringify(state));
       setCloudStatus('Saved', true);
@@ -3227,7 +3243,7 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
     }
   }
 
-  function scheduleCloudSync(delay=700) {
+  function scheduleCloudSync(delay=250) {
     clearTimeout(syncTimer);
     syncTimer = setTimeout(syncStateToCloud, delay);
   }
