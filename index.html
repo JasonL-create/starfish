@@ -2157,6 +2157,70 @@ body:not(.sf-auth-pending) #floatingNewTask{
 }
 </style>
 
+
+<style id="v79d-header-separation-mobile-fix">
+/* Restore the two-line treatment around the Tasks/Search strip.
+   The header's bottom border is line 1; the task/search strip's bottom border is line 2. */
+.topbar{
+  border-bottom:1px solid #dfe5e1!important;
+}
+.tasks-section-divider{
+  border-top:0!important;
+  border-bottom:1px solid #dfe5e1!important;
+}
+
+/* Fix mobile header geometry: logo and account icon must share the first row,
+   never overlap the Tasks/Search row. */
+@media(max-width:480px){
+  :root{
+    --v79-header-h:92px;
+    --v79-summary-h:50px;
+  }
+  .topbar{
+    height:var(--v79-header-h)!important;
+    padding:calc(env(safe-area-inset-top) + 8px) 16px 8px!important;
+    align-items:center!important;
+  }
+  .topbar .brand{
+    height:100%!important;
+    display:flex!important;
+    align-items:center!important;
+  }
+  .supplied-brand-logo{
+    width:148px!important;
+    max-width:48vw!important;
+    height:auto!important;
+  }
+  .sf-profile-button{
+    position:static!important;
+    margin-left:auto!important;
+    width:40px!important;
+    height:40px!important;
+    flex:0 0 40px!important;
+  }
+  .sf-profile-button svg{
+    width:30px!important;
+    height:30px!important;
+  }
+  .tasks-section-divider{
+    top:var(--v79-header-h)!important;
+    height:var(--v79-summary-h)!important;
+  }
+  .app{
+    padding-top:calc(var(--v79-header-h) + var(--v79-summary-h) + 14px)!important;
+  }
+}
+
+/* iPhones with a larger safe-area inset need a little more real header room. */
+@supports(padding:max(0px)){
+  @media(max-width:480px){
+    :root{
+      --v79-header-h:calc(72px + env(safe-area-inset-top));
+    }
+  }
+}
+</style>
+
 </head>
 <body class="sf-auth-pending">
 
