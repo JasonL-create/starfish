@@ -2977,6 +2977,107 @@ body:not(.sf-auth-pending) #floatingNewTask{
 }
 </style>
 
+
+<style id="v81c-inline-category-options">
+/* Category expands in-place with direct choices. */
+#detailCategoryEditor.v81c-category-editor{
+  position:static!important;
+  display:block!important;
+  width:auto!important;
+  height:auto!important;
+  left:auto!important;
+  top:auto!important;
+  overflow:visible!important;
+  z-index:auto!important;
+  pointer-events:auto!important;
+  margin:0 2px 9px!important;
+  padding:8px!important;
+  border:1px solid var(--line)!important;
+  border-radius:11px!important;
+  background:#fbfbfa!important;
+}
+#detailCategoryEditor.v81c-category-editor[hidden]{
+  display:none!important;
+}
+.v81c-hidden-category-select{
+  position:absolute!important;
+  width:1px!important;
+  height:1px!important;
+  opacity:0!important;
+  pointer-events:none!important;
+}
+.v81c-category-choices{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+}
+.v81c-category-choices button,
+.v81c-add-category-choice{
+  width:100%;
+  min-height:40px;
+  border:1px solid #e1e7e3;
+  border-radius:9px;
+  background:#fff;
+  color:var(--text);
+  padding:9px 11px;
+  text-align:left;
+  font:inherit;
+}
+.v81c-category-choices button.selected{
+  border-color:#a9c2b6;
+  background:#f1f7f4;
+  color:var(--starfish-green,#285f4b);
+  font-weight:650;
+}
+.v81c-category-choices button.selected::after{
+  content:"✓";
+  float:right;
+  color:var(--starfish-green,#285f4b);
+  font-weight:800;
+}
+.v81c-add-category-choice{
+  margin-top:6px;
+  border:0;
+  background:transparent;
+  color:var(--starfish-green,#285f4b);
+  font-weight:650;
+}
+.v81c-category-creator{
+  margin-top:7px;
+  display:grid;
+  gap:7px;
+}
+.v81c-category-creator[hidden]{display:none!important}
+.v81c-category-creator input{
+  width:100%;
+  box-sizing:border-box;
+  border:1px solid var(--line);
+  border-radius:9px;
+  background:#fff;
+  padding:9px 10px;
+  font:inherit;
+}
+.v81c-category-create-actions{
+  display:flex;
+  gap:7px;
+}
+.v81c-category-create-actions button{
+  border:1px solid var(--line);
+  border-radius:9px;
+  padding:8px 11px;
+  font:inherit;
+}
+#detailSaveNewCategory{
+  background:var(--starfish-green,#285f4b);
+  color:#fff;
+  border-color:var(--starfish-green,#285f4b);
+}
+#detailCancelNewCategory{
+  background:#fff;
+  color:#66736c;
+}
+</style>
+
 </head>
 <body class="sf-auth-pending">
 
@@ -3133,7 +3234,18 @@ body:not(.sf-auth-pending) #floatingNewTask{
         <span class="detail-row-label"><span class="detail-row-icon"><svg class="detail-line-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h8l8 8-7 7-9-9V5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="9" cy="9" r="1.4" fill="currentColor"/></svg></span><span>Category</span></span>
         <span class="details-value"><span id="detailCategoryText">None</span><span>›</span></span>
       </button>
-      <div id="detailCategoryEditor" class="details-editor" hidden><select id="detailCategory"></select></div>
+      <div id="detailCategoryEditor" class="details-editor v81c-category-editor" hidden>
+        <select id="detailCategory" class="v81c-hidden-category-select" aria-hidden="true" tabindex="-1"></select>
+        <div id="detailCategoryChoices" class="v81c-category-choices"></div>
+        <button id="detailAddCategoryChoice" class="v81c-add-category-choice" type="button">+ Add Category</button>
+        <div id="detailCategoryCreator" class="v81c-category-creator" hidden>
+          <input id="detailNewCategoryName" type="text" placeholder="New category name" maxlength="40">
+          <div class="v81c-category-create-actions">
+            <button id="detailSaveNewCategory" type="button">Add</button>
+            <button id="detailCancelNewCategory" type="button">Cancel</button>
+          </div>
+        </div>
+      </div>
 
       <button class="details-summary-row details-icon-row" id="detailInviteRow" type="button">
         <span class="detail-row-label"><span class="detail-row-icon"><svg class="detail-line-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3.8 18c.5-3.7 2.3-5.7 5.2-5.7s4.7 2 5.2 5.7M18 7v6M15 10h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><span>Invite to task</span></span>
@@ -4121,6 +4233,8 @@ function openTaskDetails(id){
   document.getElementById('detailAddSubtask').hidden=false;
 
   document.getElementById('detailCategoryEditor').hidden=true;
+  document.getElementById('detailCategoryCreator').hidden=true;
+  document.getElementById('detailNewCategoryName').value='';
   document.getElementById('detailDueEditor').hidden=true;
   document.getElementById('detailReminderEditor').hidden=true;
   document.getElementById('detailInviteEditor').hidden=true;
@@ -4144,22 +4258,70 @@ function toggleDetailsEditor(id){
   target.hidden=!target.hidden;
 }
 
+function renderDetailCategoryChoices(){
+  const t=findTask(detailTaskId);
+  const wrap=document.getElementById('detailCategoryChoices');
+  if(!t||!wrap)return;
+  const choices=[{value:'',label:'No category'},...state.categories.map(c=>({value:c,label:c}))];
+  wrap.innerHTML=choices.map(c=>`<button type="button" data-detail-category="${esc(c.value)}" class="${(t.category||'')===c.value?'selected':''}">${esc(c.label)}</button>`).join('');
+}
 document.getElementById('detailCategoryRow').addEventListener('click',()=>{
-  const sel=document.getElementById('detailCategory');
-  const holder=document.getElementById('detailCategoryEditor');
-  holder.hidden=false;
-  try{
-    sel.focus({preventScroll:true});
-    if(typeof sel.showPicker==='function'){
-      sel.showPicker();
-    }else{
-      sel.dispatchEvent(new MouseEvent('mousedown',{bubbles:true,cancelable:true,view:window}));
-      sel.click();
-    }
-  }catch(e){
-    sel.focus({preventScroll:true});
-    sel.click();
+  const editor=document.getElementById('detailCategoryEditor');
+  const opening=editor.hidden;
+  ['detailDueEditor','detailReminderEditor','detailInviteEditor','detailContactEditor'].forEach(id=>document.getElementById(id).hidden=true);
+  editor.hidden=!opening;
+  if(opening){
+    document.getElementById('detailCategoryCreator').hidden=true;
+    document.getElementById('detailNewCategoryName').value='';
+    renderDetailCategoryChoices();
   }
+});
+document.getElementById('detailCategoryChoices').addEventListener('click',e=>{
+  const btn=e.target.closest('[data-detail-category]');
+  if(!btn)return;
+  const t=findTask(detailTaskId); if(!t)return;
+  t.category=btn.dataset.detailCategory||null;
+  save();
+  document.getElementById('detailCategoryText').textContent=t.category||'None';
+  document.getElementById('detailCategory').value=t.category||'';
+  renderDetailCategoryChoices();
+  render();
+});
+document.getElementById('detailAddCategoryChoice').addEventListener('click',()=>{
+  const creator=document.getElementById('detailCategoryCreator');
+  creator.hidden=false;
+  setTimeout(()=>document.getElementById('detailNewCategoryName').focus(),0);
+});
+document.getElementById('detailCancelNewCategory').addEventListener('click',()=>{
+  document.getElementById('detailCategoryCreator').hidden=true;
+  document.getElementById('detailNewCategoryName').value='';
+});
+document.getElementById('detailSaveNewCategory').addEventListener('click',()=>{
+  const input=document.getElementById('detailNewCategoryName');
+  const clean=input.value.trim();
+  if(!clean){input.focus();return;}
+  const t=findTask(detailTaskId); if(!t)return;
+  const hidden=state.hiddenCategories.find(c=>c.toLowerCase()===clean.toLowerCase());
+  const active=state.categories.find(c=>c.toLowerCase()===clean.toLowerCase());
+  let finalName=clean;
+  if(hidden){
+    state.hiddenCategories=state.hiddenCategories.filter(c=>c!==hidden);
+    if(!state.categories.includes(hidden))state.categories.push(hidden);
+    finalName=hidden;
+  }else if(active){
+    finalName=active;
+  }else{
+    state.categories.push(clean);
+  }
+  t.category=finalName;
+  save();
+  document.getElementById('detailCategoryText').textContent=finalName;
+  document.getElementById('detailCategory').innerHTML='<option value="">No category</option>'+state.categories.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('')+'<option value="__new__">+ Create New Category</option>';
+  document.getElementById('detailCategory').value=finalName;
+  document.getElementById('detailCategoryCreator').hidden=true;
+  input.value='';
+  renderDetailCategoryChoices();
+  render();
 });
 document.getElementById('detailDueRow').addEventListener('click',()=>{
   toggleDetailsEditor('detailDueEditor');
