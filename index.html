@@ -2862,6 +2862,88 @@ body:not(.sf-auth-pending) #floatingNewTask{
 }
 </style>
 
+
+<style id="v81a-task-details-refinement">
+/* Task Details should sit ABOVE the fixed app header and remain fully reachable. */
+#taskDetailsModal{
+  z-index:120!important;
+  align-items:flex-start!important;
+  overflow-y:auto!important;
+  padding:
+    max(14px,calc(env(safe-area-inset-top) + 10px))
+    14px
+    max(18px,calc(env(safe-area-inset-bottom) + 14px))!important;
+}
+#taskDetailsModal .task-details-box.v81-details{
+  margin:auto 0!important;
+  max-height:calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom))!important;
+}
+
+/* Category uses the native select directly; do not show a second inline selection box. */
+#detailCategoryEditor{
+  display:block!important;
+  position:fixed!important;
+  left:-9999px!important;
+  top:-9999px!important;
+  width:1px!important;
+  height:1px!important;
+  padding:0!important;
+  margin:0!important;
+  border:0!important;
+  overflow:hidden!important;
+}
+#detailCategoryEditor select{
+  width:1px!important;
+  height:1px!important;
+  opacity:.01!important;
+}
+
+/* Make group boundaries more distinct than the individual rows.
+   Rows stay visually light; groups get the stronger separation. */
+.v81-details .v81-detail-group{
+  border:1.5px solid #cfd7d2!important;
+  border-radius:15px!important;
+  padding:5px 12px!important;
+  margin:0 0 15px!important;
+  box-shadow:0 1px 0 rgba(40,95,75,.03)!important;
+}
+.v81-details .v81-detail-group .details-summary-row,
+.v81-details .v81-detail-group .details-action-row{
+  border:0!important;
+  background:transparent!important;
+}
+.v81-details .v81-detail-group > button + .details-editor + button,
+.v81-details .v81-detail-group > button + button{
+  border-top:1px solid #e5eae7!important;
+}
+.v81-details .v81-detail-group + .v81-detail-group{
+  margin-top:4px!important;
+}
+.v81-details .v81-danger-group{
+  border-color:#e1e5e2!important;
+}
+
+/* Keep the header visible inside the modal while the detail body scrolls. */
+.v81-details-head{
+  z-index:5!important;
+}
+
+@media(max-width:520px){
+  #taskDetailsModal{
+    padding:
+      max(10px,calc(env(safe-area-inset-top) + 6px))
+      10px
+      max(14px,calc(env(safe-area-inset-bottom) + 10px))!important;
+  }
+  #taskDetailsModal .task-details-box.v81-details{
+    max-height:calc(100dvh - 20px - env(safe-area-inset-top) - env(safe-area-inset-bottom))!important;
+  }
+  .v81-details .v81-detail-group{
+    margin-bottom:12px!important;
+  }
+}
+</style>
+
 </head>
 <body class="sf-auth-pending">
 
@@ -4030,7 +4112,15 @@ function toggleDetailsEditor(id){
 }
 
 document.getElementById('detailCategoryRow').addEventListener('click',()=>{
-  toggleDetailsEditor('detailCategoryEditor');
+  const sel=document.getElementById('detailCategory');
+  document.getElementById('detailCategoryEditor').hidden=true;
+  try{
+    if(typeof sel.showPicker==='function') sel.showPicker();
+    else { sel.focus(); sel.click(); }
+  }catch(e){
+    sel.focus();
+    sel.click();
+  }
 });
 document.getElementById('detailDueRow').addEventListener('click',()=>{
   toggleDetailsEditor('detailDueEditor');
