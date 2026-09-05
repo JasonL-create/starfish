@@ -2880,22 +2880,28 @@ body:not(.sf-auth-pending) #floatingNewTask{
 }
 
 /* Category uses the native select directly; do not show a second inline selection box. */
+#detailCategoryRow{
+  position:relative!important;
+}
 #detailCategoryEditor{
   display:block!important;
-  position:fixed!important;
-  left:-9999px!important;
-  top:-9999px!important;
-  width:1px!important;
-  height:1px!important;
+  position:absolute!important;
+  left:18px!important;
+  top:18px!important;
+  width:2px!important;
+  height:2px!important;
   padding:0!important;
   margin:0!important;
   border:0!important;
-  overflow:hidden!important;
+  overflow:visible!important;
+  z-index:-1!important;
+  pointer-events:none!important;
 }
 #detailCategoryEditor select{
-  width:1px!important;
-  height:1px!important;
+  width:2px!important;
+  height:2px!important;
   opacity:.01!important;
+  pointer-events:none!important;
 }
 
 /* Make group boundaries more distinct than the individual rows.
@@ -2941,6 +2947,33 @@ body:not(.sf-auth-pending) #floatingNewTask{
   .v81-details .v81-detail-group{
     margin-bottom:12px!important;
   }
+}
+</style>
+
+
+<style id="v81b-task-details-cleanup">
+/* Plain grouped rows: Due Date should not look like a separate standalone button. */
+.v81-details #detailDueRow{
+  border:0!important;
+  background:transparent!important;
+  border-radius:0!important;
+  margin:0!important;
+  padding:13px 4px!important;
+  min-height:0!important;
+  box-shadow:none!important;
+}
+
+/* Contact inputs already identify themselves; remove redundant field labels. */
+.v81-details #detailContactEditor label{
+  display:none!important;
+}
+.v81-details #detailContactEditor{
+  gap:9px!important;
+}
+
+/* When there is no contact yet, don't show a confusing "None" beside "Add contact info to Task". */
+.v81-details #detailContactText:empty{
+  display:none!important;
 }
 </style>
 
@@ -4075,7 +4108,7 @@ function openTaskDetails(id){
     : 'None';
   document.getElementById('detailInviteText').textContent=activeInvite?`${activeInvite} · ${t.inviteStatus==='accepted'?'Accepted':'Pending'}`:'No one';
   const contact=getTaskContact(t);
-  document.getElementById('detailContactText').textContent=contactDisplay(contact);
+  document.getElementById('detailContactText').textContent=contact ? contactDisplay(contact) : '';
   document.getElementById('detailContactName').value=contact?.name||'';
   document.getElementById('detailContactPhone').value=contact?.phone||'';
   document.getElementById('detailContactEmail').value=contact?.email||'';
@@ -4113,12 +4146,18 @@ function toggleDetailsEditor(id){
 
 document.getElementById('detailCategoryRow').addEventListener('click',()=>{
   const sel=document.getElementById('detailCategory');
-  document.getElementById('detailCategoryEditor').hidden=true;
+  const holder=document.getElementById('detailCategoryEditor');
+  holder.hidden=false;
   try{
-    if(typeof sel.showPicker==='function') sel.showPicker();
-    else { sel.focus(); sel.click(); }
+    sel.focus({preventScroll:true});
+    if(typeof sel.showPicker==='function'){
+      sel.showPicker();
+    }else{
+      sel.dispatchEvent(new MouseEvent('mousedown',{bubbles:true,cancelable:true,view:window}));
+      sel.click();
+    }
   }catch(e){
-    sel.focus();
+    sel.focus({preventScroll:true});
     sel.click();
   }
 });
