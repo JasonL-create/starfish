@@ -3456,6 +3456,17 @@ body:not(.sf-auth-pending) #floatingNewTask{
  <div class="confirm-box"><h3>Hide category?</h3><p id="hideCategoryText"></p><div class="confirm-actions"><button id="cancelHideCategory" type="button">Cancel</button><button id="yesHideCategory" class="yes-hide" type="button">Yes, hide</button></div></div>
 </div>
 
+<div id="hideInviteConfirm" class="confirm-backdrop" aria-hidden="true">
+  <div class="confirm-box">
+    <h3>Hide person?</h3>
+    <p id="hideInviteText"></p>
+    <div class="confirm-actions">
+      <button id="cancelHideInvite" type="button">Cancel</button>
+      <button id="yesHideInvite" class="yes-hide" type="button">Yes, hide</button>
+    </div>
+  </div>
+</div>
+
 
 
 <button id="floatingNewTask" class="floating-new-task visible" type="button" aria-label="New Task">+</button>
@@ -5706,17 +5717,6 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
 })();
 </script>
 
-
-<div id="hideInviteConfirm" class="confirm-backdrop" aria-hidden="true">
-  <div class="confirm-box">
-    <h3>Hide person?</h3>
-    <p id="hideInviteText"></p>
-    <div class="confirm-actions">
-      <button id="cancelHideInvite" type="button">Cancel</button>
-      <button id="yesHideInvite" class="yes-hide" type="button">Yes, hide</button>
-    </div>
-  </div>
-</div>
 
 </body>
 </html>
