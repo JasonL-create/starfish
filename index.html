@@ -3405,6 +3405,53 @@ body:not(.sf-auth-pending) #floatingNewTask{
 }
 </style>
 
+
+<style id="v82c-due-time-mobile-fix">
+.v82c-datetime-editor{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  width:100%;
+}
+.v82c-datetime-editor .detail-reminder-picker{
+  width:100%;
+  min-width:0;
+}
+.v82c-clear-datetime{
+  align-self:flex-end;
+  border:1px solid var(--line);
+  border-radius:9px;
+  padding:8px 12px;
+  background:#fff;
+  color:var(--muted);
+}
+@media(max-width:520px){
+  .v82c-datetime-editor{
+    gap:8px;
+  }
+  .v82c-datetime-editor .detail-reminder-picker{
+    display:flex;
+    flex-direction:column;
+    align-items:stretch;
+    gap:8px;
+  }
+  .v82c-datetime-editor .detail-reminder-picker input[type="date"]{
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    box-sizing:border-box;
+  }
+  .v82c-datetime-editor .reminder-time-selects{
+    width:100%;
+    min-width:0;
+  }
+  .v82c-clear-datetime{
+    align-self:flex-start;
+    margin-top:2px;
+  }
+}
+</style>
+
 </head>
 <body class="sf-auth-pending">
 
@@ -3601,7 +3648,17 @@ body:not(.sf-auth-pending) #floatingNewTask{
         <span class="details-value"><span id="detailDueText">None</span><span>›</span></span>
       </button>
       <div id="detailDueEditor" class="details-editor" hidden>
-        <div class="details-due-edit-row"><input id="detailDue" type="date"><button id="detailDueClear" type="button">Clear</button></div>
+        <div class="v82c-datetime-editor">
+          <div class="detail-reminder-picker">
+            <input id="detailDue" type="date" aria-label="Due date">
+            <div class="reminder-time-selects">
+              <select id="detailDueHour" aria-label="Due hour"></select><span class="time-colon">:</span>
+              <select id="detailDueMinute" aria-label="Due minutes"><option value="00">00</option><option value="15">15</option><option value="30">30</option><option value="45">45</option></select>
+              <select id="detailDuePeriod" aria-label="AM or PM"><option>AM</option><option>PM</option></select>
+            </div>
+          </div>
+          <button id="detailDueClear" class="v82c-clear-datetime" type="button">Clear</button>
+        </div>
       </div>
 
       <button class="details-summary-row details-icon-row" id="detailReminderRow" type="button">
@@ -3739,7 +3796,17 @@ body:not(.sf-auth-pending) #floatingNewTask{
         <span class="details-value"><span id="newTaskDueLabel">None</span><span>›</span></span>
       </button>
       <div id="newTaskDueEditor" class="details-editor" hidden>
-        <div class="details-due-edit-row"><input id="newTaskDue" type="date" aria-label="Due Date"><button id="newTaskDueClear" type="button">Clear</button></div>
+        <div class="v82c-datetime-editor">
+          <div class="detail-reminder-picker">
+            <input id="newTaskDue" type="date" aria-label="Due date">
+            <div class="reminder-time-selects">
+              <select id="newTaskDueHour" aria-label="Due hour"></select><span class="time-colon">:</span>
+              <select id="newTaskDueMinute" aria-label="Due minutes"><option value="00">00</option><option value="15">15</option><option value="30">30</option><option value="45">45</option></select>
+              <select id="newTaskDuePeriod" aria-label="AM or PM"><option>AM</option><option>PM</option></select>
+            </div>
+          </div>
+          <button id="newTaskDueClear" class="v82c-clear-datetime" type="button">Clear</button>
+        </div>
       </div>
 
       <button id="toggleNewTaskReminder" class="details-summary-row details-icon-row" type="button">
@@ -3877,8 +3944,76 @@ function getInviteNames(){try{return JSON.parse(localStorage.getItem('starfish_i
 function saveInviteName(name){const n=(name||'').trim();if(!n)return;const a=getInviteNames();if(!a.some(x=>x.toLowerCase()===n.toLowerCase())){a.push(n);localStorage.setItem('starfish_invite_names',JSON.stringify(a));}}
 function inviteOptions(selected=''){const a=[...new Set([...getInviteNames(),...(selected?[selected]:[])])];return '<option value="">Invite To Task</option>'+a.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('')+'<option value="__new__">+ Invite someone</option>';}
 
+
+const DUE_TIME_KEY='starfish_due_times_v1';
+function getDueTimeMap(){try{return JSON.parse(localStorage.getItem(DUE_TIME_KEY)||'{}')}catch(e){return {}}}
+function setDueTimeForTask(id,time){
+  if(!id)return;
+  const map=getDueTimeMap();
+  if(time)map[id]=time; else delete map[id];
+  localStorage.setItem(DUE_TIME_KEY,JSON.stringify(map));
+}
+function getDueTimeForTask(id){return getDueTimeMap()[id]||'';}
+function dueTime12Parts(time){
+  let h=17,m='00';
+  if(time){
+    const p=time.split(':');
+    h=parseInt(p[0]||'17',10);m=p[1]||'00';
+  }
+  const period=h>=12?'PM':'AM';
+  const hour=h%12||12;
+  return {hour:String(hour),minute:m,period};
+}
+function duePartsToTime(hour,minute,period){
+  let h=parseInt(hour||'5',10);
+  if(period==='AM'&&h===12)h=0;
+  if(period==='PM'&&h!==12)h+=12;
+  return `${String(h).padStart(2,'0')}:${minute||'00'}`;
+}
+function setDuePicker(prefix,date,time){
+  const d=document.getElementById(prefix);
+  const h=document.getElementById(prefix+'Hour');
+  const m=document.getElementById(prefix+'Minute');
+  const p=document.getElementById(prefix+'Period');
+  if(!h.options.length)fillReminderHours(prefix+'Hour');
+  d.value=date||'';
+  const parts=dueTime12Parts(time||'17:00');
+  h.value=parts.hour;m.value=parts.minute;p.value=parts.period;
+}
+function getDuePickerTime(prefix){
+  return duePartsToTime(
+    document.getElementById(prefix+'Hour').value,
+    document.getElementById(prefix+'Minute').value,
+    document.getElementById(prefix+'Period').value
+  );
+}
+function dueLocalDate(t){
+  if(!t?.dueDate)return null;
+  if(!t.dueTime)return null;
+  const [y,mo,d]=t.dueDate.split('-').map(Number);
+  const [h,mi]=(t.dueTime||'17:00').split(':').map(Number);
+  return new Date(y,mo-1,d,h,mi,0,0);
+}
+function formatDueValue(date,time,includeYear=false){
+  if(!date)return 'None';
+  const [y,mo,d]=date.split('-').map(Number);
+  if(time){
+    const [h,mi]=time.split(':').map(Number);
+    return new Date(y,mo-1,d,h,mi,0,0).toLocaleString(undefined,{
+      month:'short',day:'numeric',...(includeYear?{year:'numeric'}:{}),hour:'numeric',minute:'2-digit'
+    });
+  }
+  return new Date(y,mo-1,d,12,0,0,0).toLocaleDateString(undefined,{
+    month:'short',day:'numeric',...(includeYear?{year:'numeric'}:{})
+  });
+}
+
 function localToday(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
-function isOverdue(t){return !t.hidden && !!t.dueDate && t.dueDate < localToday() && !isFullyComplete(t);}
+function isOverdue(t){
+  if(t.hidden||!t.dueDate||isFullyComplete(t))return false;
+  const dt=dueLocalDate(t);
+  return dt ? Date.now()>dt.getTime() : t.dueDate<localToday();
+}
 function isOldTask(t){return !t.hidden && (Date.now()-new Date(t.createdAt).getTime()) >= 7*24*60*60*1000 && !isFullyComplete(t);}
 
 function syncListOptionSummaries(){
@@ -4036,7 +4171,11 @@ function render(){
     if(!!a.pinned!==!!b.pinned) return a.pinned?-1:1;
     if(sort==='created-asc') return new Date(a.createdAt)-new Date(b.createdAt);
     if(sort==='category') return (a.category||'zzzz').localeCompare(b.category||'zzzz') || new Date(b.createdAt)-new Date(a.createdAt);
-    if(sort==='due') return (a.dueDate||'9999-12-31').localeCompare(b.dueDate||'9999-12-31');
+    if(sort==='due'){
+      const av=a.dueDate?`${a.dueDate}T${a.dueTime||'23:59'}`:'9999-12-31T23:59';
+      const bv=b.dueDate?`${b.dueDate}T${b.dueTime||'23:59'}`:'9999-12-31T23:59';
+      return av.localeCompare(bv);
+    }
     if(sort==='completed-desc') return new Date(b.completedAt||0)-new Date(a.completedAt||0);
     return new Date(b.createdAt)-new Date(a.createdAt);
   });
@@ -4099,7 +4238,7 @@ function taskHtml(t,q){
     ${(t.dueDate||t.reminderAt||t.invitedUser)?`<div class="task-indicator-row">
       <div class="task-time-block">
         ${t.reminderAt?`<span class="task-indicator reminder-indicator"><svg class="indicator-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 16.5h11l-1.4-2.2V10a4.1 4.1 0 0 0-8.2 0v4.3L6.5 16.5zM10 19h4" fill="currentColor" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>${new Date(t.reminderAt).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</span></span>`:''}
-        ${t.dueDate?`<span class="task-indicator due-indicator ${overdue?'overdue':''}">${overdue?'Overdue':'Due'}: ${new Date(t.dueDate+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric'})}</span>`:''}
+        ${t.dueDate?`<span class="task-indicator due-indicator ${overdue?'overdue':''}">${overdue?'Overdue':'Due'}: ${formatDueValue(t.dueDate,t.dueTime,false)}</span>`:''}
       </div>
       <div class="task-status-block">
         ${t.invitedUser?`<span class="task-indicator invite-indicator ${t.inviteStatus==='accepted'?'invite-accepted':''}"><svg class="indicator-svg person-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7" r="4" fill="currentColor"></circle><path d="M5 21c.5-5 3.1-8 7-8s6.5 3 7 8H5z" fill="currentColor"></path></svg><span>${esc(t.invitedUser)}</span>${t.inviteStatus==='accepted'?'<span class="invite-accepted-check" aria-label="Accepted">✓</span>':''}</span>`:''}
@@ -4293,7 +4432,12 @@ function reminderPartsToValue(date,hour,minute,period){
   let h=parseInt(hour||'12',10);
   if(period==='AM'&&h===12)h=0;
   if(period==='PM'&&h!==12)h+=12;
-  return `${date}T${String(h).padStart(2,'0')}:${minute||'00'}`;
+  const [year,month,day]=date.split('-').map(Number);
+  const localDate=new Date(year,month-1,day,h,parseInt(minute||'00',10),0,0);
+  return localDate.toISOString();
+}
+function localDateInputValue(dt){
+  return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
 }
 function setReminderPicker(prefix,value){
   const d=document.getElementById(prefix+'Date');
@@ -4303,7 +4447,7 @@ function setReminderPicker(prefix,value){
   if(!h.options.length)fillReminderHours(prefix+'Hour');
   if(!value){d.value='';h.value='9';m.value='00';p.value='AM';return;}
   const dt=new Date(value);
-  d.value=value.slice(0,10);
+  d.value=localDateInputValue(dt);
   let hour=dt.getHours();
   p.value=hour>=12?'PM':'AM';
   hour=hour%12||12;
@@ -4324,7 +4468,7 @@ fillReminderHours('detailReminderHour');
 
 function resetNewTaskModal(){
   document.getElementById('newTaskTitle').value='';
-  document.getElementById('newTaskDue').value='';
+  setDuePicker('newTaskDue','','17:00');
   document.getElementById('newTaskDueLabel').textContent='None';
   document.getElementById('newTaskInvite').innerHTML=inviteOptions();
   document.getElementById('newTaskInvite').value='';
@@ -4397,10 +4541,12 @@ document.getElementById('newTaskModal').addEventListener('click',e=>{
   if(e.target.id==='newTaskModal')closeNewTaskModal();
 });
 document.getElementById('addNewTaskSubtask').addEventListener('click',addNewTaskSubtaskRow);
-document.getElementById('newTaskDue').addEventListener('change',e=>{
-  document.getElementById('newTaskDueLabel').textContent=e.target.value
-    ? new Date(e.target.value+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})
-    : 'None';
+['newTaskDue','newTaskDueHour','newTaskDueMinute','newTaskDuePeriod'].forEach(id=>{
+  document.getElementById(id).addEventListener('change',()=>{
+    const date=document.getElementById('newTaskDue').value;
+    const time=date?getDuePickerTime('newTaskDue'):'';
+    document.getElementById('newTaskDueLabel').textContent=formatDueValue(date,time,true);
+  });
 });
 
 document.getElementById('toggleNewTaskReminder').addEventListener('click',()=>{
@@ -4453,11 +4599,15 @@ document.getElementById('newTaskInviteRow').addEventListener('click',()=>{
 });
 document.getElementById('toggleNewTaskDue').addEventListener('click',()=>{
   const ed=document.getElementById('newTaskDueEditor');
+  const opening=ed.hidden;
   ed.hidden=!ed.hidden;
-  if(!ed.hidden)setTimeout(()=>document.getElementById('newTaskDue').focus(),0);
+  if(opening){
+    const d=document.getElementById('newTaskDue');
+    if(!d.value)setDuePicker('newTaskDue',localDateInputValue(new Date()),'17:00');
+  }
 });
 document.getElementById('newTaskDueClear').addEventListener('click',()=>{
-  document.getElementById('newTaskDue').value='';
+  setDuePicker('newTaskDue','','17:00');
   document.getElementById('newTaskDueLabel').textContent='None';
 });
 document.getElementById('newTaskCategoryChoices').addEventListener('click',e=>{
@@ -4600,11 +4750,15 @@ document.getElementById('createNewTask').addEventListener('click',()=>{
     document.getElementById('newTaskContactPhone').value,
     document.getElementById('newTaskContactEmail').value
   );
+  const newTaskId=crypto.randomUUID();
+  const newTaskDueDate=document.getElementById('newTaskDue').value||'';
+  const newTaskDueTime=newTaskDueDate?getDuePickerTime('newTaskDue'):'';
   state.tasks.unshift({
-    id:crypto.randomUUID(),
+    id:newTaskId,
     title,
     createdAt:now,
-    dueDate:document.getElementById('newTaskDue').value||'',
+    dueDate:newTaskDueDate,
+    dueTime:newTaskDueTime,
     reminderAt:getReminderPickerValue('newTaskReminder'),
     category:(document.getElementById('newTaskCategory').value==='__create_new__'?'':document.getElementById('newTaskCategory').value)||null,
     invitedUser:document.getElementById('newTaskInvite').dataset.confirmed||null,
@@ -4617,6 +4771,7 @@ document.getElementById('createNewTask').addEventListener('click',()=>{
     completedAt:null,
     subtasks
   });
+  if(newTaskDueTime)setDueTimeForTask(newTaskId,newTaskDueTime);
   view='current';
   setActiveTab();
   save();
@@ -4713,7 +4868,7 @@ function openTaskDetails(id){
     '<option value="__new__">+ Create New Category</option>';
   catSel.value=t.category||'';
 
-  document.getElementById('detailDue').value=t.dueDate||'';
+  setDuePicker('detailDue',t.dueDate||'',t.dueTime||getDueTimeForTask(t.id)||'17:00');
   setReminderPicker('detailReminder',t.reminderAt||'');
   document.getElementById('detailReminderText').textContent=t.reminderAt
     ? new Date(t.reminderAt).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})
@@ -4729,9 +4884,8 @@ function openTaskDetails(id){
   document.getElementById('detailCancelInvite').hidden=!activeInvite;
 
   document.getElementById('detailCategoryText').textContent=t.category||'None';
-  document.getElementById('detailDueText').textContent=t.dueDate
-    ? new Date(t.dueDate+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})
-    : 'None';
+  document.getElementById('detailDueText').textContent=
+    formatDueValue(t.dueDate,t.dueTime||getDueTimeForTask(t.id),true);
   document.getElementById('detailInviteText').textContent=activeInvite?`${activeInvite} · ${t.inviteStatus==='accepted'?'Accepted':'Pending'}`:'No one';
   const contact=getTaskContact(t);
   document.getElementById('detailContactText').textContent=contact ? contactDisplay(contact) : '';
@@ -4854,10 +5008,27 @@ document.getElementById('detailSaveNewCategory').addEventListener('click',()=>{
   render();
 });
 document.getElementById('detailDueRow').addEventListener('click',()=>{
+  const editor=document.getElementById('detailDueEditor');
+  const opening=editor.hidden;
   toggleDetailsEditor('detailDueEditor');
+  if(opening){
+    const t=findTask(detailTaskId);
+    if(t && !document.getElementById('detailDue').value){
+      setDuePicker('detailDue',localDateInputValue(new Date()),'17:00');
+    }
+  }
 });
 document.getElementById('detailReminderRow').addEventListener('click',()=>{
+  const editor=document.getElementById('detailReminderEditor');
+  const opening=editor.hidden;
   toggleDetailsEditor('detailReminderEditor');
+  if(opening){
+    const t=findTask(detailTaskId);
+    const dateInput=document.getElementById('detailReminderDate');
+    if(t && !t.reminderAt && !dateInput.value){
+      dateInput.value=localDateInputValue(new Date());
+    }
+  }
 });
 document.getElementById('detailInviteRow').addEventListener('click',()=>{
   toggleDetailsEditor('detailInviteEditor');
@@ -4894,15 +5065,27 @@ document.getElementById('detailCategory').addEventListener('change',e=>{
   openTaskDetails(t.id);
 });
 
-document.getElementById('detailDue').addEventListener('change',e=>{
-  const t=findTask(detailTaskId); if(!t)return;
-  t.dueDate=e.target.value||'';
-  save(); render(); openTaskDetails(t.id);
+['detailDue','detailDueHour','detailDueMinute','detailDuePeriod'].forEach(id=>{
+  document.getElementById(id).addEventListener('change',()=>{
+    const t=findTask(detailTaskId);if(!t)return;
+    const date=document.getElementById('detailDue').value||'';
+    const time=date?getDuePickerTime('detailDue'):'';
+    t.dueDate=date;
+    t.dueTime=time;
+    setDueTimeForTask(t.id,time);
+    save();
+    document.getElementById('detailDueText').textContent=formatDueValue(date,time,true);
+    document.getElementById('detailDueEditor').hidden=false;
+  });
 });
 document.getElementById('detailDueClear').addEventListener('click',()=>{
-  const t=findTask(detailTaskId); if(!t)return;
-  t.dueDate='';
-  save(); render(); openTaskDetails(t.id);
+  const t=findTask(detailTaskId);if(!t)return;
+  t.dueDate='';t.dueTime='';
+  setDueTimeForTask(t.id,'');
+  setDuePicker('detailDue','','17:00');
+  save();
+  document.getElementById('detailDueText').textContent='None';
+  document.getElementById('detailDueEditor').hidden=false;
 });
 
 ['detailReminderDate','detailReminderHour','detailReminderMinute','detailReminderPeriod'].forEach(id=>{
@@ -4910,11 +5093,9 @@ document.getElementById('detailDueClear').addEventListener('click',()=>{
     const t=findTask(detailTaskId);if(!t)return;
     t.reminderAt=getReminderPickerValue('detailReminder');
     save();
-    render();
     document.getElementById('detailReminderText').textContent=t.reminderAt
       ? new Date(t.reminderAt).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})
       : 'None';
-    // Keep the reminder editor open while date/hour/minute/AM-PM are being selected.
     document.getElementById('detailReminderEditor').hidden=false;
   });
 });
@@ -5336,7 +5517,7 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
     const ownedMapped = ownedTasks.map(t => {
       const inv = inviteByTask.get(t.id);
       return {
-        id:t.id, title:t.title, createdAt:t.created_at, dueDate:t.due_date||'',
+        id:t.id, title:t.title, createdAt:t.created_at, dueDate:t.due_date||'', dueTime:getDueTimeForTask(t.id),
         reminderAt:t.reminder_at||'', category:t.category_id ? (categoryById.get(t.category_id)||null) : null,
         pinned:!!t.is_pinned, parentComplete:!!t.is_complete, parentCompletedAt:t.completed_at,
         hidden:!!t.is_hidden, completedAt:t.completed_at, contactId:t.contact_id||null,
@@ -5351,7 +5532,7 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
     const sharedMapped = sharedTasks.map(t => {
       const acceptedInvite = acceptedInviteByTask.get(t.id);
       return {
-        id:t.id, title:t.title, createdAt:t.created_at, dueDate:t.due_date||'',
+        id:t.id, title:t.title, createdAt:t.created_at, dueDate:t.due_date||'', dueTime:getDueTimeForTask(t.id),
         reminderAt:t.reminder_at||'', category:null, pinned:!!t.is_pinned,
         parentComplete:!!t.is_complete, parentCompletedAt:t.completed_at, hidden:!!t.is_hidden,
         completedAt:t.completed_at, contactId:null, invitedUser:null, inviteStatus:'accepted',
