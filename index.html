@@ -3117,6 +3117,40 @@ body:not(.sf-auth-pending) #floatingNewTask{
 }
 </style>
 
+
+<style id="v81e-category-dot-hide">
+.v81c-category-choices button{
+  position:relative!important;
+  display:flex!important;
+  align-items:center!important;
+  gap:10px!important;
+}
+.v81c-category-choices button[data-detail-category]:not([data-detail-category=""])::before{
+  content:""!important;
+  width:5px!important;height:5px!important;min-width:5px!important;
+  border-radius:50%!important;
+  background:#78847f!important;
+  display:inline-block!important;
+}
+.v81c-category-choices button .v81e-category-label{flex:1!important}
+.v81c-category-choices button .v81e-category-action{
+  margin-left:auto!important;
+  padding-left:16px!important;
+  font-size:14px!important;
+  font-weight:500!important;
+  color:#9aa19e!important;
+  white-space:nowrap!important;
+}
+.v81c-category-choices button.selected::after{display:none!important}
+.v81c-category-choices button .v81e-category-check{
+  margin-left:auto!important;
+  color:var(--starfish-green,#285f4b)!important;
+  font-size:20px!important;
+  line-height:1!important;
+  font-weight:800!important;
+}
+</style>
+
 </head>
 <body class="sf-auth-pending">
 
@@ -4302,7 +4336,13 @@ function renderDetailCategoryChoices(){
   const wrap=document.getElementById('detailCategoryChoices');
   if(!t||!wrap)return;
   const choices=[{value:'',label:'No category'},...state.categories.map(c=>({value:c,label:c}))];
-  wrap.innerHTML=choices.map(c=>`<button type="button" data-detail-category="${esc(c.value)}" class="${(t.category||'')===c.value?'selected':''}">${esc(c.label)}</button>`).join('');
+  wrap.innerHTML=choices.map(c=>{
+    const selected=(t.category||'')===c.value;
+    const right=selected
+      ? '<span class="v81e-category-check" aria-label="Selected">✓</span>'
+      : (c.value ? `<span class="v81e-category-action" data-hide-detail-category="${esc(c.value)}">Hide?</span>` : '');
+    return `<button type="button" data-detail-category="${esc(c.value)}" class="${selected?'selected':''}"><span class="v81e-category-label">${esc(c.label)}</span>${right}</button>`;
+  }).join('');
 }
 document.getElementById('detailCategoryRow').addEventListener('click',()=>{
   const editor=document.getElementById('detailCategoryEditor');
@@ -4316,6 +4356,14 @@ document.getElementById('detailCategoryRow').addEventListener('click',()=>{
   }
 });
 document.getElementById('detailCategoryChoices').addEventListener('click',e=>{
+  const hide=e.target.closest('[data-hide-detail-category]');
+  if(hide){
+    e.stopPropagation();
+    pendingHideCategory=hide.dataset.hideDetailCategory;
+    document.getElementById('hideCategoryText').textContent=`Hide “${pendingHideCategory}”? Existing tasks will keep this category. To restore it later, use + Add Category and enter “${pendingHideCategory}” again.`;
+    document.getElementById('hideCategoryConfirm').classList.add('open');
+    return;
+  }
   const btn=e.target.closest('[data-detail-category]');
   if(!btn)return;
   const t=findTask(detailTaskId); if(!t)return;
@@ -4539,7 +4587,16 @@ document.getElementById('requestHideCategory').addEventListener('click',()=>{
 document.getElementById('cancelHideCategory').addEventListener('click',()=>{pendingHideCategory=null;document.getElementById('hideCategoryConfirm').classList.remove('open');});
 document.getElementById('yesHideCategory').addEventListener('click',()=>{
  if(pendingHideCategory){state.categories=state.categories.filter(c=>c!==pendingHideCategory);if(!state.hiddenCategories.includes(pendingHideCategory))state.hiddenCategories.push(pendingHideCategory);save();}
- pendingHideCategory=null;document.getElementById('hideCategoryConfirm').classList.remove('open');closeCategoryModal();render();
+ pendingHideCategory=null;
+ document.getElementById('hideCategoryConfirm').classList.remove('open');
+ if(detailTaskId){
+   const sel=document.getElementById('detailCategory');
+   if(sel)sel.innerHTML='<option value="">No category</option>'+state.categories.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('')+'<option value="__new__">+ Create New Category</option>';
+   renderDetailCategoryChoices();
+ }else{
+   closeCategoryModal();
+ }
+ render();
 });
 
 
