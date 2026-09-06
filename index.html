@@ -3202,6 +3202,66 @@ body:not(.sf-auth-pending) #floatingNewTask{
 #hideInviteConfirm{z-index:230!important}
 </style>
 
+
+<style id="v82-new-task-details-match">
+#newTaskModal{
+  align-items:flex-start!important;
+  justify-content:center!important;
+  padding:20px!important;
+  overflow:auto!important;
+  z-index:125!important;
+}
+#newTaskModal .v82-newtask-box{
+  width:min(520px,calc(100vw - 40px))!important;
+  max-width:520px!important;
+  margin:0 auto!important;
+  max-height:none!important;
+  overflow:visible!important;
+  padding:0 0 18px!important;
+}
+.v82-newtask-head{
+  padding:18px 22px 14px!important;
+  border-bottom:1px solid var(--line)!important;
+}
+.v82-newtask-head .details-close{
+  margin-left:auto!important;
+}
+.v82-title-wrap{padding:16px 22px 4px}
+.v82-title-input{
+  width:100%;min-height:54px;border:1px solid var(--line);border-radius:13px;
+  padding:12px 14px;font:inherit;font-size:19px;outline:none;background:#fff;
+}
+.v82-title-input:focus{border-color:#aebdb6;box-shadow:0 0 0 3px rgba(40,95,75,.07)}
+#newTaskModal .v81-detail-group{margin:14px 22px 0!important}
+#newTaskCategoryEditor,#newTaskInviteEditor{padding-left:52px!important}
+#newTaskCategoryChoices button,#newTaskInviteChoices button{
+  position:relative!important;display:flex!important;align-items:center!important;gap:10px!important
+}
+#newTaskCategoryChoices button[data-newtask-category]:not([data-newtask-category=""])::before,
+#newTaskInviteChoices button[data-newtask-invite]:not([data-newtask-invite=""])::before{
+  content:"";width:5px;height:5px;min-width:5px;border-radius:50%;background:#78847f;display:inline-block
+}
+.v82-choice-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.v82-choice-check{margin-left:auto;color:var(--starfish-green,#285f4b);font-size:20px;line-height:1;font-weight:800}
+.v82-choice-hide{margin-left:auto;color:#9aa19e;font-size:14px;font-weight:500;white-space:nowrap}
+#newTaskCategoryCreator[hidden],#newTaskInviteCreator[hidden],
+#newTaskDueEditor[hidden],#newTaskReminderFields[hidden],#newTaskContactFields[hidden]{display:none!important}
+.v82-newtask-subtasks{padding:0 10px 6px 52px}
+.v82-newtask-actions{
+  display:flex;justify-content:flex-end;gap:10px;padding:18px 22px 0
+}
+.v82-newtask-actions button{min-height:44px}
+@media(max-width:520px){
+  #newTaskModal{padding:12px!important}
+  #newTaskModal .v82-newtask-box{width:calc(100vw - 24px)!important}
+  .v82-newtask-head{padding:16px 18px 12px!important}
+  .v82-title-wrap{padding:14px 18px 2px}
+  #newTaskModal .v81-detail-group{margin:12px 18px 0!important}
+  #newTaskCategoryEditor,#newTaskInviteEditor{padding-left:43px!important}
+  .v82-newtask-actions{padding:16px 18px 0}
+}
+</style>
+
 </head>
 <body class="sf-auth-pending">
 
@@ -3471,88 +3531,111 @@ body:not(.sf-auth-pending) #floatingNewTask{
 
 <button id="floatingNewTask" class="floating-new-task visible" type="button" aria-label="New Task">+</button>
 
-<div id="newTaskModal" class="modal-backdrop newtask-modal" role="dialog" aria-modal="true">
-  <div class="modal compact-newtask-modal">
-    <div class="newtask-grid">
-      <div class="newtask-field">
-        <input id="newTaskTitle" class="newtask-primary-input" placeholder="Add New Task" autocomplete="off">
-      </div>
 
-      <div class="newtask-field">
-        <div class="newtask-icon-control">
-          <span class="newtask-control-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><path d="M4 5.5v5.8L12.7 20l7.3-7.3L11.3 4H5.5A1.5 1.5 0 0 0 4 5.5Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="8" cy="8" r="1.2" fill="currentColor"/></svg>
-          </span>
-          <select id="newTaskCategory"><option value="">Category</option></select>
-        </div>
-        <div id="newTaskCategoryCreator" class="newtask-category-creator" hidden>
+<div id="newTaskModal" class="modal-backdrop newtask-modal v82-newtask-modal" role="dialog" aria-modal="true">
+  <div class="confirm-box task-details-box v81-details v82-newtask-box">
+    <div class="details-head v81-details-head v82-newtask-head">
+      <div><h3>New Task</h3></div>
+      <button id="cancelNewTaskTop" class="details-close" type="button" aria-label="Close">×</button>
+    </div>
+
+    <div class="v82-title-wrap">
+      <input id="newTaskTitle" class="v82-title-input" placeholder="Add New Task" autocomplete="off">
+    </div>
+
+    <section class="v81-detail-group">
+      <button class="details-summary-row details-icon-row" id="newTaskCategoryRow" type="button">
+        <span class="detail-row-label"><span class="detail-row-icon">
+          <svg class="detail-line-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h8l8 8-7 7-9-9V5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="9" cy="9" r="1.4" fill="currentColor"/></svg>
+        </span><span>Category</span></span>
+        <span class="details-value"><span id="newTaskCategoryText">None</span><span>›</span></span>
+      </button>
+      <div id="newTaskCategoryEditor" class="details-editor v81c-category-editor" hidden>
+        <select id="newTaskCategory" hidden><option value="">Category</option></select>
+        <div id="newTaskCategoryChoices" class="v81c-category-choices"></div>
+        <button id="newTaskAddCategoryChoice" class="v81c-add-category-choice" type="button">+ Add Category</button>
+        <div id="newTaskCategoryCreator" class="v81c-category-creator" hidden>
           <input id="newTaskCategoryName" placeholder="New category name" maxlength="40">
-          <button id="saveNewTaskCategory" type="button">Add Category</button>
-        </div>
-      </div>
-
-      <div class="newtask-field">
-        <div class="due-date-control-wrap">
-          <button id="toggleNewTaskDue" class="contact-toggle-btn due-toggle-btn icon-action-btn" type="button" tabindex="-1" aria-hidden="true">
-            <span class="newtask-control-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3v3M18 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-            <span id="newTaskDueLabel">Due Date</span>
-          </button>
-          <input id="newTaskDue" class="native-date-trigger" type="date" aria-label="Due Date">
-        </div>
-      </div>
-
-      <div class="newtask-field">
-        <button id="toggleNewTaskReminder" class="contact-toggle-btn reminder-toggle-btn icon-action-btn" type="button">
-          <span class="newtask-control-icon reminder-button-bell" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6.5 16.5h11l-1.4-2.2V10a4.1 4.1 0 0 0-8.2 0v4.3L6.5 16.5zM10 19h4" fill="currentColor" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-          <span id="newTaskReminderLabel">Add reminder</span>
-        </button>
-        <div id="newTaskReminderFields" class="contact-fields" hidden>
-          <input id="newTaskReminderDate" type="date" aria-label="Reminder date">
-          <div class="reminder-time-selects">
-            <select id="newTaskReminderHour" aria-label="Reminder hour"></select>
-            <span class="time-colon">:</span>
-            <select id="newTaskReminderMinute" aria-label="Reminder minutes">
-              <option value="00">00</option><option value="15">15</option>
-              <option value="30">30</option><option value="45">45</option>
-            </select>
-            <select id="newTaskReminderPeriod" aria-label="AM or PM">
-              <option>AM</option><option>PM</option>
-            </select>
+          <div class="v81c-category-create-actions">
+            <button id="saveNewTaskCategory" type="button">Add</button>
+            <button id="cancelNewTaskCategory" type="button">Cancel</button>
           </div>
         </div>
       </div>
 
-      <div class="newtask-field">
-        <div class="newtask-icon-control invite-icon-control">
-          <span class="newtask-control-icon person-control-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="10" cy="7.5" r="3.4" fill="currentColor"/><path d="M4.2 19c.5-4.2 2.5-6.6 5.8-6.6s5.3 2.4 5.8 6.6H4.2Z" fill="currentColor"/><path d="M18.5 8v5M16 10.5h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
-          <select id="newTaskInvite"><option value="">Invite To Task</option><option value="__new__">+ Invite someone</option></select>
-        </div>
-        <div id="newTaskInviteCreator" class="newtask-category-creator" hidden>
-          <input id="newTaskInviteName" placeholder="Username" maxlength="40">
+      <button class="details-summary-row details-icon-row" id="newTaskInviteRow" type="button">
+        <span class="detail-row-label"><span class="detail-row-icon">
+          <svg class="detail-line-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3.8 18c.5-3.7 2.3-5.7 5.2-5.7s4.7 2 5.2 5.7M18 7v6M15 10h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </span><span>Invite to task</span></span>
+        <span class="details-value"><span id="newTaskInviteText">No one</span><span>›</span></span>
+      </button>
+      <div id="newTaskInviteEditor" class="details-editor v81g-invite-editor" hidden>
+        <select id="newTaskInvite" hidden><option value="">Invite To Task</option></select>
+        <div id="newTaskInviteChoices" class="v81g-invite-choices"></div>
+        <button id="newTaskAddInviteChoice" class="v81g-add-invite-choice" type="button">+ Invite Someone New</button>
+        <div id="newTaskInviteCreator" class="details-inline-create v81g-invite-creator" hidden>
+          <input id="newTaskInviteName" placeholder="Email address" maxlength="80">
           <button id="saveNewTaskInvite" type="button">Add</button>
         </div>
         <button id="newTaskSendInvite" class="invite-send-btn" type="button" hidden>Send Invite</button>
         <div id="newTaskInvitePending" class="invite-pending-note" hidden></div>
       </div>
 
-      <div class="newtask-field">
-        <button id="toggleNewTaskContact" class="contact-toggle-btn" type="button">+ Add contact</button>
-        <div id="newTaskContactFields" class="contact-fields" hidden>
-          <input id="newTaskContactName" type="text" placeholder="Name" autocomplete="name">
-          <input id="newTaskContactPhone" type="tel" placeholder="Phone" autocomplete="tel">
-          <input id="newTaskContactEmail" type="email" placeholder="Email" autocomplete="email">
+      <button id="addNewTaskSubtask" class="details-action-row v81-add-subtask" type="button">
+        <span class="details-action-icon"><svg class="detail-line-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+        <span>Add subtask</span>
+      </button>
+      <div id="newTaskSubtasks" class="newtask-subtasks v82-newtask-subtasks"></div>
+    </section>
+
+    <section class="v81-detail-group">
+      <button class="details-summary-row details-icon-row" id="toggleNewTaskDue" type="button">
+        <span class="detail-row-label"><span class="detail-row-icon">
+          <svg class="detail-line-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3v3M18 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span><span>Add Due Date</span></span>
+        <span class="details-value"><span id="newTaskDueLabel">None</span><span>›</span></span>
+      </button>
+      <div id="newTaskDueEditor" class="details-editor" hidden>
+        <div class="details-due-edit-row"><input id="newTaskDue" type="date" aria-label="Due Date"><button id="newTaskDueClear" type="button">Clear</button></div>
+      </div>
+
+      <button id="toggleNewTaskReminder" class="details-summary-row details-icon-row" type="button">
+        <span class="detail-row-label"><span class="detail-row-icon reminder-green">
+          <svg class="detail-line-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 16.5h11l-1.4-2.2V10a4.1 4.1 0 0 0-8.2 0v4.3L6.5 16.5zM10 19h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span><span>Add Reminder</span></span>
+        <span class="details-value"><span id="newTaskReminderLabel">None</span><span>›</span></span>
+      </button>
+      <div id="newTaskReminderFields" class="details-editor" hidden>
+        <div class="details-due-edit-row">
+          <div class="detail-reminder-picker">
+            <input id="newTaskReminderDate" type="date" aria-label="Reminder date">
+            <div class="reminder-time-selects">
+              <select id="newTaskReminderHour" aria-label="Reminder hour"></select><span class="time-colon">:</span>
+              <select id="newTaskReminderMinute" aria-label="Reminder minutes"><option value="00">00</option><option value="15">15</option><option value="30">30</option><option value="45">45</option></select>
+              <select id="newTaskReminderPeriod" aria-label="AM or PM"><option>AM</option><option>PM</option></select>
+            </div>
+          </div>
         </div>
       </div>
+    </section>
 
-      <div class="newtask-field">
-        <div id="newTaskSubtasks" class="newtask-subtasks"></div>
-        <button id="addNewTaskSubtask" class="add-another-sub" type="button">+ Add sub-task</button>
+    <section class="v81-detail-group">
+      <button id="toggleNewTaskContact" class="details-summary-row details-icon-row" type="button">
+        <span class="detail-row-label"><span class="detail-row-icon">
+          <svg class="detail-line-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3.8 18c.5-3.7 2.3-5.7 5.2-5.7s4.7 2 5.2 5.7M16 7h5M16 11h5M16 15h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </span><span>Add contact info to Task</span></span>
+        <span class="details-value"><span id="newTaskContactText"></span><span>›</span></span>
+      </button>
+      <div id="newTaskContactFields" class="details-editor contact-fields" hidden>
+        <input id="newTaskContactName" type="text" placeholder="Name" autocomplete="name">
+        <input id="newTaskContactPhone" type="tel" placeholder="Phone" autocomplete="tel">
+        <input id="newTaskContactEmail" type="email" placeholder="Email" autocomplete="email">
       </div>
+    </section>
 
-      <div class="newtask-actions">
-        <button id="cancelNewTask" class="newtask-cancel" type="button">Cancel</button>
-        <button id="createNewTask" class="newtask-create" type="button">Create Task</button>
-      </div>
+    <div class="v82-newtask-actions">
+      <button id="cancelNewTask" class="newtask-cancel" type="button">Cancel</button>
+      <button id="createNewTask" class="newtask-create" type="button">Create Task</button>
     </div>
   </div>
 </div>
@@ -4099,7 +4182,7 @@ fillReminderHours('detailReminderHour');
 function resetNewTaskModal(){
   document.getElementById('newTaskTitle').value='';
   document.getElementById('newTaskDue').value='';
-  document.getElementById('newTaskDueLabel').textContent='Due Date';
+  document.getElementById('newTaskDueLabel').textContent='None';
   document.getElementById('newTaskInvite').innerHTML=inviteOptions();
   document.getElementById('newTaskInvite').value='';
   document.getElementById('newTaskInviteCreator').hidden=true;
@@ -4115,13 +4198,20 @@ function resetNewTaskModal(){
   document.getElementById('newTaskCategoryName').value='';
   document.getElementById('newTaskSubtasks').innerHTML='';
   document.getElementById('newTaskReminderFields').hidden=true;
-  document.getElementById('newTaskReminderLabel').textContent='Add reminder';
+  document.getElementById('newTaskReminderLabel').textContent='None';
   setReminderPicker('newTaskReminder','');
   document.getElementById('newTaskContactFields').hidden=true;
-  document.getElementById('toggleNewTaskContact').textContent='+ Add contact';
+  document.getElementById('newTaskContactText').textContent='';
   document.getElementById('newTaskContactName').value='';
   document.getElementById('newTaskContactPhone').value='';
   document.getElementById('newTaskContactEmail').value='';
+  document.getElementById('newTaskCategoryEditor').hidden=true;
+  document.getElementById('newTaskInviteEditor').hidden=true;
+  document.getElementById('newTaskDueEditor').hidden=true;
+  document.getElementById('newTaskCategoryText').textContent='None';
+  document.getElementById('newTaskInviteText').textContent='No one';
+  renderNewTaskCategoryChoices();
+  renderNewTaskInviteChoices();
 }
 function addNewTaskSubtaskRow(){
   const wrap=document.getElementById('newTaskSubtasks');
@@ -4166,22 +4256,117 @@ document.getElementById('newTaskModal').addEventListener('click',e=>{
 document.getElementById('addNewTaskSubtask').addEventListener('click',addNewTaskSubtaskRow);
 document.getElementById('newTaskDue').addEventListener('change',e=>{
   document.getElementById('newTaskDueLabel').textContent=e.target.value
-    ? `Due: ${new Date(e.target.value+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric'})}`
-    : 'Due Date';
+    ? new Date(e.target.value+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})
+    : 'None';
 });
 
 document.getElementById('toggleNewTaskReminder').addEventListener('click',()=>{
   const fields=document.getElementById('newTaskReminderFields');
   fields.hidden=!fields.hidden;
-  document.getElementById('newTaskReminderLabel').textContent=fields.hidden?'Add reminder':'Hide reminder';
   if(!fields.hidden)setTimeout(()=>document.getElementById('newTaskReminderDate').focus(),0);
 });
 document.getElementById('toggleNewTaskContact').addEventListener('click',()=>{
   const fields=document.getElementById('newTaskContactFields');
   fields.hidden=!fields.hidden;
-  document.getElementById('toggleNewTaskContact').textContent=fields.hidden?'+ Add contact':'Hide contact';
   if(!fields.hidden)setTimeout(()=>document.getElementById('newTaskContactName').focus(),0);
 });
+
+
+function renderNewTaskCategoryChoices(){
+  const wrap=document.getElementById('newTaskCategoryChoices');
+  const selected=document.getElementById('newTaskCategory').value||'';
+  const choices=[{value:'',label:'No category'},...state.categories.map(c=>({value:c,label:c}))];
+  wrap.innerHTML=choices.map(c=>{
+    const isSelected=selected===c.value;
+    const right=isSelected
+      ? '<span class="v82-choice-check">✓</span>'
+      : (c.value?`<span class="v82-choice-hide" data-newtask-hide-category="${esc(c.value)}">Hide?</span>`:'');
+    return `<button type="button" data-newtask-category="${esc(c.value)}" class="${isSelected?'selected':''}"><span class="v82-choice-label">${esc(c.label)}</span>${right}</button>`;
+  }).join('');
+}
+function renderNewTaskInviteChoices(){
+  const wrap=document.getElementById('newTaskInviteChoices');
+  const selected=document.getElementById('newTaskInvite').value||'';
+  const hidden=getHiddenInviteNames();
+  const names=getInviteNames().filter(n=>selected===n||!hidden.includes(n));
+  const choices=[{value:'',label:'No one'},...names.map(n=>({value:n,label:n}))];
+  wrap.innerHTML=choices.map(c=>{
+    const isSelected=selected===c.value;
+    const right=isSelected
+      ? '<span class="v82-choice-check">✓</span>'
+      : (c.value?`<span class="v82-choice-hide" data-newtask-hide-invite="${esc(c.value)}">Hide?</span>`:'');
+    return `<button type="button" data-newtask-invite="${esc(c.value)}"><span class="v82-choice-label">${esc(c.label)}</span>${right}</button>`;
+  }).join('');
+}
+document.getElementById('newTaskCategoryRow').addEventListener('click',()=>{
+  const ed=document.getElementById('newTaskCategoryEditor');
+  ed.hidden=!ed.hidden;
+  if(!ed.hidden){document.getElementById('newTaskInviteEditor').hidden=true;renderNewTaskCategoryChoices();}
+});
+document.getElementById('newTaskInviteRow').addEventListener('click',()=>{
+  const ed=document.getElementById('newTaskInviteEditor');
+  ed.hidden=!ed.hidden;
+  if(!ed.hidden){document.getElementById('newTaskCategoryEditor').hidden=true;renderNewTaskInviteChoices();}
+});
+document.getElementById('toggleNewTaskDue').addEventListener('click',()=>{
+  const ed=document.getElementById('newTaskDueEditor');
+  ed.hidden=!ed.hidden;
+  if(!ed.hidden)setTimeout(()=>document.getElementById('newTaskDue').focus(),0);
+});
+document.getElementById('newTaskDueClear').addEventListener('click',()=>{
+  document.getElementById('newTaskDue').value='';
+  document.getElementById('newTaskDueLabel').textContent='None';
+});
+document.getElementById('newTaskCategoryChoices').addEventListener('click',e=>{
+  const hide=e.target.closest('[data-newtask-hide-category]');
+  if(hide){
+    e.stopPropagation();
+    pendingHideCategory=hide.dataset.newtaskHideCategory;
+    document.getElementById('hideCategoryText').textContent=`Hide “${pendingHideCategory}”? Existing tasks will keep this category. To restore it later, use + Add Category and enter “${pendingHideCategory}” again.`;
+    document.getElementById('hideCategoryConfirm').classList.add('open');
+    return;
+  }
+  const btn=e.target.closest('[data-newtask-category]');if(!btn)return;
+  const value=btn.dataset.newtaskCategory||'';
+  document.getElementById('newTaskCategory').value=value;
+  document.getElementById('newTaskCategoryText').textContent=value||'None';
+  renderNewTaskCategoryChoices();
+  document.getElementById('newTaskCategoryEditor').hidden=true;
+});
+document.getElementById('newTaskAddCategoryChoice').addEventListener('click',()=>{
+  document.getElementById('newTaskCategoryCreator').hidden=false;
+  setTimeout(()=>document.getElementById('newTaskCategoryName').focus(),0);
+});
+document.getElementById('cancelNewTaskCategory').addEventListener('click',()=>{
+  document.getElementById('newTaskCategoryCreator').hidden=true;
+  document.getElementById('newTaskCategoryName').value='';
+});
+document.getElementById('newTaskInviteChoices').addEventListener('click',e=>{
+  const hide=e.target.closest('[data-newtask-hide-invite]');
+  if(hide){
+    e.stopPropagation();
+    pendingHideInviteName=hide.dataset.newtaskHideInvite;
+    document.getElementById('hideInviteText').textContent=`Hide “${pendingHideInviteName}”? Existing tasks will keep this person. To restore them later, use + Invite Someone New and enter “${pendingHideInviteName}” again.`;
+    document.getElementById('hideInviteConfirm').classList.add('open');
+    document.getElementById('hideInviteConfirm').setAttribute('aria-hidden','false');
+    return;
+  }
+  const btn=e.target.closest('[data-newtask-invite]');if(!btn)return;
+  const value=btn.dataset.newtaskInvite||'';
+  const sel=document.getElementById('newTaskInvite');
+  sel.value=value;sel.dataset.confirmed='';
+  document.getElementById('newTaskInviteText').textContent=value||'No one';
+  document.getElementById('newTaskSendInvite').hidden=!value;
+  document.getElementById('newTaskInvitePending').hidden=true;
+  renderNewTaskInviteChoices();
+  if(!value)document.getElementById('newTaskInviteEditor').hidden=true;
+});
+document.getElementById('newTaskAddInviteChoice').addEventListener('click',()=>{
+  document.getElementById('newTaskInviteCreator').hidden=false;
+  document.getElementById('newTaskSendInvite').hidden=true;
+  setTimeout(()=>document.getElementById('newTaskInviteName').focus(),0);
+});
+document.getElementById('cancelNewTaskTop').addEventListener('click',closeNewTaskModal);
 
 document.getElementById('newTaskCategory').addEventListener('change',e=>{
   const creator=document.getElementById('newTaskCategoryCreator');
@@ -4214,6 +4399,10 @@ document.getElementById('saveNewTaskCategory').addEventListener('click',()=>{
   }
   document.getElementById('newTaskCategoryCreator').hidden=true;
   input.value='';
+  const selected=document.getElementById('newTaskCategory').value||'';
+  document.getElementById('newTaskCategoryText').textContent=selected||'None';
+  renderNewTaskCategoryChoices();
+  document.getElementById('newTaskCategoryEditor').hidden=true;
 });
 document.getElementById('newTaskCategoryName').addEventListener('keydown',e=>{
   if(e.key==='Enter'){e.preventDefault();document.getElementById('saveNewTaskCategory').click();}
@@ -4228,8 +4417,13 @@ document.getElementById('newTaskInvite').addEventListener('change',e=>{
  else{box.hidden=true;send.hidden=!e.target.value;}
 });
 document.getElementById('saveNewTaskInvite').addEventListener('click',()=>{
- const i=document.getElementById('newTaskInviteName'),n=i.value.trim();if(!n){i.focus();return}
- saveInviteName(n);const sel=document.getElementById('newTaskInvite');sel.innerHTML=inviteOptions(n);sel.value=n;document.getElementById('newTaskInviteCreator').hidden=true;document.getElementById('newTaskSendInvite').hidden=false;i.value='';
+ const i=document.getElementById('newTaskInviteName');let n=i.value.trim();if(!n){i.focus();return}
+ const hidden=getHiddenInviteNames();const hiddenMatch=hidden.find(x=>x.toLowerCase()===n.toLowerCase());
+ if(hiddenMatch){setHiddenInviteNames(hidden.filter(x=>x!==hiddenMatch));n=hiddenMatch;}
+ saveInviteName(n);const sel=document.getElementById('newTaskInvite');sel.innerHTML=inviteOptions(n);sel.value=n;
+ document.getElementById('newTaskInviteText').textContent=n;
+ document.getElementById('newTaskInviteCreator').hidden=true;document.getElementById('newTaskSendInvite').hidden=false;i.value='';
+ renderNewTaskInviteChoices();
 });
 document.getElementById('newTaskInviteName').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();document.getElementById('saveNewTaskInvite').click();}});
 document.getElementById('newTaskSendInvite').addEventListener('click',()=>{
@@ -4238,7 +4432,19 @@ document.getElementById('newTaskSendInvite').addEventListener('click',()=>{
  sel.dataset.confirmed=name;sel.disabled=true;
  document.getElementById('newTaskSendInvite').hidden=true;
  const note=document.getElementById('newTaskInvitePending');note.textContent=`${name} · Pending`;note.hidden=false;
+ document.getElementById('newTaskInviteText').textContent=`${name} · Pending`;
+ document.getElementById('newTaskInviteEditor').hidden=true;
 });
+
+['newTaskReminderDate','newTaskReminderHour','newTaskReminderMinute','newTaskReminderPeriod'].forEach(id=>{
+  document.getElementById(id).addEventListener('change',()=>{
+    const value=getReminderPickerValue('newTaskReminder');
+    document.getElementById('newTaskReminderLabel').textContent=value
+      ? new Date(value).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})
+      : 'None';
+  });
+});
+
 document.getElementById('createNewTask').addEventListener('click',()=>{
   const title=document.getElementById('newTaskTitle').value.trim();
   if(!title){document.getElementById('newTaskTitle').focus();return;}
@@ -4595,6 +4801,7 @@ document.getElementById('yesHideInvite').addEventListener('click',()=>{
   const m=document.getElementById('hideInviteConfirm');
   m.classList.remove('open');m.setAttribute('aria-hidden','true');
   renderDetailInviteChoices();
+  if(document.getElementById('newTaskModal').classList.contains('open'))renderNewTaskInviteChoices();
 });
 document.getElementById('hideInviteConfirm').addEventListener('click',e=>{
   if(e.target===e.currentTarget)document.getElementById('cancelHideInvite').click();
@@ -4756,6 +4963,14 @@ document.getElementById('yesHideCategory').addEventListener('click',()=>{
  if(pendingHideCategory){state.categories=state.categories.filter(c=>c!==pendingHideCategory);if(!state.hiddenCategories.includes(pendingHideCategory))state.hiddenCategories.push(pendingHideCategory);save();}
  pendingHideCategory=null;
  document.getElementById('hideCategoryConfirm').classList.remove('open');
+ if(document.getElementById('newTaskModal').classList.contains('open')){
+   refreshNewTaskCategoryOptions();
+   if(!state.categories.includes(document.getElementById('newTaskCategory').value)){
+     document.getElementById('newTaskCategory').value='';
+     document.getElementById('newTaskCategoryText').textContent='None';
+   }
+   renderNewTaskCategoryChoices();
+ }
  if(detailTaskId){
    const sel=document.getElementById('detailCategory');
    if(sel)sel.innerHTML='<option value="">No category</option>'+state.categories.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('')+'<option value="__new__">+ Create New Category</option>';
