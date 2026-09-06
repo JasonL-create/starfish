@@ -3809,6 +3809,16 @@ body:not(.sf-auth-pending) #floatingNewTask{
 }
 </style>
 
+
+<style id="v82n-genie-hide">
+.task-card.sf-genie-hiding{
+  pointer-events:none!important;
+  overflow:hidden!important;
+  will-change:transform,opacity,height,padding,border-width;
+  transform-origin:right center!important;
+}
+</style>
+
 </head>
 <body class="sf-auth-pending">
 
@@ -4654,6 +4664,81 @@ function renderFilters(){
   }
 }
 
+
+async function animateTaskHideGenie(card){
+  if(!card)return;
+  if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+
+  card.classList.add('sf-genie-hiding');
+
+  const startHeight=card.getBoundingClientRect().height;
+  const cs=getComputedStyle(card);
+  const startPadTop=cs.paddingTop;
+  const startPadBottom=cs.paddingBottom;
+
+  // Phase 1: a quick "suction/genie" pull toward the right edge.
+  const genie=card.animate([
+    {
+      transform:'translateX(0) scaleX(1) scaleY(1) skewY(0deg)',
+      opacity:1,
+      clipPath:'polygon(0 0,100% 0,100% 100%,0 100%)'
+    },
+    {
+      offset:.48,
+      transform:'translateX(10%) scaleX(.88) scaleY(.94) skewY(-1deg)',
+      opacity:.96,
+      clipPath:'polygon(6% 4%,100% 0,100% 100%,6% 96%)'
+    },
+    {
+      offset:.78,
+      transform:'translateX(42%) scaleX(.48) scaleY(.58) skewY(-4deg)',
+      opacity:.72,
+      clipPath:'polygon(44% 22%,100% 4%,100% 96%,44% 78%)'
+    },
+    {
+      transform:'translateX(82%) scaleX(.08) scaleY(.18) skewY(-7deg)',
+      opacity:0,
+      clipPath:'polygon(92% 46%,100% 42%,100% 58%,92% 54%)'
+    }
+  ],{
+    duration:390,
+    easing:'cubic-bezier(.2,.75,.25,1)',
+    fill:'forwards'
+  });
+
+  await genie.finished.catch(()=>{});
+
+  // Reset transform visually while keeping it invisible, then collapse its
+  // actual layout height so the cards above/below slide together.
+  card.style.opacity='0';
+  card.style.transform='none';
+  card.style.clipPath='none';
+  card.style.height=startHeight+'px';
+
+  const collapse=card.animate([
+    {
+      height:startHeight+'px',
+      paddingTop:startPadTop,
+      paddingBottom:startPadBottom,
+      opacity:0
+    },
+    {
+      height:'0px',
+      paddingTop:'0px',
+      paddingBottom:'0px',
+      borderTopWidth:'0px',
+      borderBottomWidth:'0px',
+      opacity:0
+    }
+  ],{
+    duration:210,
+    easing:'cubic-bezier(.4,0,.2,1)',
+    fill:'forwards'
+  });
+
+  await collapse.finished.catch(()=>{});
+}
+
 function bindTaskEvents(){
   document.querySelectorAll('.task-card').forEach(card=>{
     const id=card.dataset.task, t=findTask(id);
@@ -4724,7 +4809,15 @@ function bindTaskEvents(){
       if(!e.target.checked && t.hidden){t.hidden=false;t.completedAt=null;view='current';setActiveTab();}
       save();render();
     }));
-    const hide=card.querySelector('.hide-confirm');if(hide)hide.addEventListener('click',()=>{t.hidden=true;t.completedAt=new Date().toISOString();save();render();});
+    const hide=card.querySelector('.hide-confirm');
+    if(hide)hide.addEventListener('click',async()=>{
+      if(card.classList.contains('sf-genie-hiding'))return;
+      await animateTaskHideGenie(card);
+      t.hidden=true;
+      t.completedAt=new Date().toISOString();
+      save();
+      render();
+    });
     const keep=card.querySelector('.keep');if(keep)keep.addEventListener('click',()=>{ /* intentionally remains visible */ });
   });
 }
