@@ -3821,6 +3821,402 @@ body:not(.sf-auth-pending) #floatingNewTask{
 }
 </style>
 
+
+<style id="v82r-card-rhythm-experiment">
+/* Visual-only experiment based on the earlier Starfish card concept.
+   No task behavior, cloud logic, menus, or animation logic changed. */
+
+.task-card{
+  padding:18px 18px 17px!important;
+}
+
+.task-top{
+  display:grid!important;
+  grid-template-columns:28px minmax(0,1fr) auto!important;
+  column-gap:13px!important;
+  align-items:center!important;
+  min-height:32px!important;
+}
+
+.task-top>.parent-check{
+  width:25px!important;
+  height:25px!important;
+  border-radius:7px!important;
+  margin:0!important;
+  justify-self:start!important;
+}
+
+.task-top>.parent-check:checked::after{
+  width:9px!important;
+  height:5px!important;
+}
+
+.task-title{
+  font-size:17px!important;
+  line-height:1.3!important;
+  font-weight:620!important;
+  padding-right:86px!important;
+}
+
+.task-status-actions{
+  top:10px!important;
+  right:12px!important;
+  gap:7px!important;
+}
+
+.task-status-actions .pin-status-icon{
+  width:28px!important;
+  height:32px!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  transform:rotate(-18deg)!important;
+  transform-origin:center!important;
+}
+
+.task-status-actions .pin-status-icon .pin-svg{
+  width:21px!important;
+  height:21px!important;
+}
+
+.task-status-actions .task-menu-btn.vertical-dots{
+  width:36px!important;
+  height:36px!important;
+}
+
+/* Give secondary information a deliberate icon/text grid. */
+.task-indicator-row{
+  margin:15px 0 0 0!important;
+  padding:12px 0 0 41px!important;
+  border-top:1px solid #e0e4e1!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  gap:10px 20px!important;
+}
+
+.task-time-block{
+  gap:9px!important;
+}
+
+.task-indicator{
+  min-height:22px!important;
+  gap:9px!important;
+  font-size:13px!important;
+  line-height:1.25!important;
+}
+
+.task-indicator .indicator-svg{
+  width:20px!important;
+  height:20px!important;
+  flex:0 0 20px!important;
+}
+
+.reminder-indicator .indicator-svg{
+  width:21px!important;
+  height:21px!important;
+  flex-basis:21px!important;
+}
+
+.task-status-block{
+  gap:9px 12px!important;
+  min-height:22px!important;
+}
+
+.task-status-block .invite-indicator{
+  font-size:13px!important;
+}
+
+/* Keep subtasks visually aligned with the title column. */
+.subtasks,
+.hide-prompt,
+.completion-note{
+  margin-left:41px!important;
+}
+
+.subtask .check{
+  width:19px!important;
+  height:19px!important;
+}
+
+/* Preserve the current narrow-screen behavior while keeping the same grid rhythm. */
+@media(max-width:420px){
+  .task-card{
+    padding:16px 14px!important;
+  }
+  .task-top{
+    grid-template-columns:27px minmax(0,1fr) auto!important;
+    column-gap:11px!important;
+  }
+  .task-title{
+    font-size:16.5px!important;
+    padding-right:78px!important;
+  }
+  .task-status-actions{
+    right:9px!important;
+    top:8px!important;
+  }
+  .task-indicator-row{
+    padding-left:38px!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+    gap:10px 12px!important;
+  }
+  .subtasks,
+  .hide-prompt,
+  .completion-note{
+    margin-left:38px!important;
+  }
+  .task-status-block{
+    justify-content:flex-end!important;
+  }
+}
+</style>
+
+
+<style id="v82s-icon-energy-experiment">
+/* Follow-up visual experiment only: bolder icons, opposite pin tilt,
+   round checkboxes, and a Starfish cue for overdue tasks. */
+
+.task-top>.parent-check{
+  width:25px!important;
+  height:25px!important;
+  border-radius:50%!important;
+  border-width:1.7px!important;
+}
+
+.subtask .check{
+  width:19px!important;
+  height:19px!important;
+  border-radius:50%!important;
+}
+
+.task-status-actions .pin-status-icon{
+  transform:rotate(18deg)!important;
+}
+
+.task-status-actions .pin-status-icon .pin-svg{
+  width:23px!important;
+  height:23px!important;
+}
+
+.task-indicator .indicator-svg{
+  width:22px!important;
+  height:22px!important;
+  flex:0 0 22px!important;
+}
+
+.reminder-indicator .indicator-svg{
+  width:23px!important;
+  height:23px!important;
+  flex-basis:23px!important;
+}
+
+.task-status-block .invite-indicator .person-svg{
+  width:22px!important;
+  height:22px!important;
+  flex-basis:22px!important;
+}
+
+.overdue-starfish-icon{
+  width:21px!important;
+  height:21px!important;
+  flex:0 0 21px!important;
+  display:block!important;
+  color:var(--starfish-orange)!important;
+  transform:rotate(-9deg);
+}
+
+.due-indicator.overdue{
+  gap:8px!important;
+}
+
+@media(max-width:420px){
+  .task-status-actions .pin-status-icon .pin-svg{
+    width:22px!important;
+    height:22px!important;
+  }
+  .task-indicator .indicator-svg{
+    width:21px!important;
+    height:21px!important;
+    flex-basis:21px!important;
+  }
+  .overdue-starfish-icon{
+    width:20px!important;
+    height:20px!important;
+    flex-basis:20px!important;
+  }
+}
+</style>
+
+
+<style id="v82t-depth-and-alignment">
+/* Visual-only follow-up: align timing information to the main checkbox column
+   and introduce restrained depth to the pin/icon family. */
+
+.task-indicator-row{
+  padding-left:0!important;
+}
+
+.task-time-block{
+  width:100%!important;
+  gap:9px!important;
+}
+
+/* Checkbox/icon column is 25px wide; text begins on the same title axis. */
+.task-time-block .task-indicator{
+  display:grid!important;
+  grid-template-columns:25px minmax(0,1fr)!important;
+  column-gap:13px!important;
+  align-items:center!important;
+  width:100%!important;
+}
+
+/* Due can contain calendar + overdue starfish, so keep the starfish with text
+   while the calendar owns the aligned icon column. */
+.task-time-block .due-indicator.overdue{
+  grid-template-columns:25px auto minmax(0,1fr)!important;
+  column-gap:9px!important;
+}
+
+.task-time-block .indicator-svg,
+.task-time-block .due-calendar-svg{
+  justify-self:center!important;
+}
+
+/* Slight depth: a soft highlight and shadow, not a glossy/cartoon effect. */
+.task-status-actions .pin-status-icon .pin-svg{
+  filter:drop-shadow(1.2px 2px 1.2px rgba(22,52,40,.28))!important;
+}
+
+.task-status-actions .pin-status-icon .pin-svg path{
+  stroke:rgba(255,255,255,.42)!important;
+  stroke-width:.65px!important;
+  paint-order:stroke fill!important;
+}
+
+.reminder-indicator .indicator-svg{
+  filter:drop-shadow(0 1.5px 1px rgba(126,92,0,.22))!important;
+}
+
+.due-calendar-svg{
+  filter:drop-shadow(0 1.2px .8px rgba(18,67,47,.20))!important;
+}
+
+.person-svg{
+  filter:drop-shadow(0 1.2px .8px rgba(122,55,22,.18))!important;
+}
+
+.overdue-starfish-icon{
+  filter:drop-shadow(.8px 1.3px .8px rgba(142,56,23,.22))!important;
+}
+
+/* Keep the same alignment on mobile. */
+@media(max-width:420px){
+  .task-time-block .task-indicator{
+    grid-template-columns:25px minmax(0,1fr)!important;
+    column-gap:11px!important;
+  }
+  .task-time-block .due-indicator.overdue{
+    grid-template-columns:25px auto minmax(0,1fr)!important;
+    column-gap:8px!important;
+  }
+}
+</style>
+
+
+<style id="v82u-overdue-icon-alignment-fix">
+.task-time-block .due-indicator.overdue{
+  grid-template-columns:25px minmax(0,1fr)!important;
+  column-gap:13px!important;
+}
+.task-time-block .overdue-starfish-icon{
+  justify-self:center!important;
+}
+@media(max-width:420px){
+  .task-time-block .due-indicator.overdue{
+    grid-template-columns:25px minmax(0,1fr)!important;
+    column-gap:11px!important;
+  }
+}
+</style>
+
+
+<style id="v82v-time-stack-alignment-fix">
+/* Reminder and due/overdue are one true two-column stack:
+   icon column aligned under the main checkbox, text column aligned under title. */
+.task-indicator-row{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  align-items:start!important;
+}
+
+.task-time-block{
+  display:grid!important;
+  grid-template-columns:25px minmax(0,1fr)!important;
+  column-gap:13px!important;
+  row-gap:10px!important;
+  align-items:center!important;
+  width:100%!important;
+}
+
+.task-time-block .task-indicator{
+  display:contents!important;
+}
+
+.task-time-block .task-indicator > svg{
+  grid-column:1!important;
+  justify-self:center!important;
+  align-self:center!important;
+}
+
+.task-time-block .task-indicator > span{
+  grid-column:2!important;
+  justify-self:start!important;
+  align-self:center!important;
+}
+
+/* Ensure each reminder/due pair occupies its own row. */
+.task-time-block .reminder-indicator > svg,
+.task-time-block .reminder-indicator > span{
+  grid-row:auto!important;
+}
+
+.task-time-block .due-indicator > svg,
+.task-time-block .due-indicator > span{
+  grid-row:auto!important;
+}
+
+@media(max-width:420px){
+  .task-time-block{
+    grid-template-columns:25px minmax(0,1fr)!important;
+    column-gap:11px!important;
+  }
+}
+</style>
+
+
+<style id="v82w-icons-20-percent-larger">
+/* Visual-only: increase the card's informational/action icons by ~20%. */
+.task-status-actions .pin-status-icon .pin-svg{
+  width:27px!important;
+  height:27px!important;
+}
+.task-time-block .indicator-svg,
+.task-time-block .due-calendar-svg{
+  width:26px!important;
+  height:26px!important;
+  flex-basis:26px!important;
+}
+.task-time-block .overdue-starfish-icon{
+  width:25px!important;
+  height:25px!important;
+  flex-basis:25px!important;
+}
+.task-status-block .invite-indicator .person-svg{
+  width:26px!important;
+  height:26px!important;
+  flex-basis:26px!important;
+}
+</style>
+
 </head>
 <body class="sf-auth-pending">
 
@@ -4636,7 +5032,7 @@ function taskHtml(t,q){
     ${(t.dueDate||t.reminderAt||t.invitedUser)?`<div class="task-indicator-row">
       <div class="task-time-block">
         ${t.reminderAt?`<span class="task-indicator reminder-indicator"><svg class="indicator-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 16.5h11l-1.4-2.2V10a4.1 4.1 0 0 0-8.2 0v4.3L6.5 16.5zM10 19h4" fill="currentColor" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>${new Date(t.reminderAt).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</span></span>`:''}
-        ${t.dueDate?`<span class="task-indicator due-indicator ${overdue?'overdue':''}">${overdue?'Overdue':'Due'}: ${formatDueValue(t.dueDate,t.dueTime,false)}</span>`:''}
+        ${t.dueDate?`<span class="task-indicator due-indicator ${overdue?'overdue':''}">${overdue?`<svg class="overdue-starfish-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.2l2.1 5.2 5.5-1.5-3.2 4.7 4.8 3-5.7.5.4 5.7-3.9-4.1-3.9 4.1.4-5.7-5.7-.5 4.8-3-3.2-4.7 5.5 1.5L12 2.2z" fill="currentColor"/></svg>`:`<svg class="indicator-svg due-calendar-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14" rx="2.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 3.5v4M16 3.5v4M4 9.5h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`}<span>${overdue?'Overdue':'Due'}: ${formatDueValue(t.dueDate,t.dueTime,false)}</span></span>`:''}
       </div>
       <div class="task-status-block">
         ${t.invitedUser?`<span class="task-indicator invite-indicator ${t.inviteStatus==='accepted'?'invite-accepted':''}"><svg class="indicator-svg person-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7" r="4" fill="currentColor"></circle><path d="M5 21c.5-5 3.1-8 7-8s6.5 3 7 8H5z" fill="currentColor"></path></svg><span>${esc(t.invitedUser)}</span>${t.inviteStatus==='accepted'?'<span class="invite-accepted-check" aria-label="Accepted">✓</span>':''}</span>`:''}
