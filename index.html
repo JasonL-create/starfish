@@ -3559,6 +3559,79 @@ body:not(.sf-auth-pending) #floatingNewTask{
 }
 </style>
 
+
+<style id="v82h-match-contact-editor">
+/* ONE editor container — same visual language as Add Contact. */
+#newTaskDueEditor,
+#newTaskReminderFields,
+#detailDueEditor,
+#detailReminderEditor{
+  margin:0 2px 9px!important;
+  padding:10px!important;
+  border:1px solid var(--line)!important;
+  border-radius:11px!important;
+  background:#fbfbfa!important;
+  box-sizing:border-box!important;
+  width:auto!important;
+}
+
+/* Kill ONLY the second nested box. */
+#newTaskDueEditor .v82c-datetime-editor,
+#newTaskReminderFields .v82c-datetime-editor,
+#detailDueEditor .v82c-datetime-editor,
+#detailReminderEditor .v82c-datetime-editor{
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  width:100%!important;
+  max-width:100%!important;
+  box-sizing:border-box!important;
+}
+
+/* Keep the controls neatly inside that one box. */
+#newTaskDueEditor .detail-reminder-picker,
+#newTaskReminderFields .detail-reminder-picker,
+#detailDueEditor .detail-reminder-picker,
+#detailReminderEditor .detail-reminder-picker{
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+}
+
+#newTaskDueEditor input[type="date"],
+#newTaskReminderFields input[type="date"],
+#detailDueEditor input[type="date"],
+#detailReminderEditor input[type="date"]{
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+  margin:0!important;
+}
+
+/* Same straightforward vertical rhythm as the contact inputs. */
+#newTaskDueEditor .v82c-datetime-editor,
+#newTaskReminderFields .v82c-datetime-editor,
+#detailDueEditor .v82c-datetime-editor,
+#detailReminderEditor .v82c-datetime-editor{
+  gap:9px!important;
+}
+
+@media(max-width:520px){
+  #newTaskDueEditor,
+  #newTaskReminderFields,
+  #detailDueEditor,
+  #detailReminderEditor{
+    margin:0 2px 9px!important;
+    padding:10px!important;
+  }
+}
+</style>
+
 </head>
 <body class="sf-auth-pending">
 
