@@ -3673,6 +3673,49 @@ body:not(.sf-auth-pending) #floatingNewTask{
 }
 </style>
 
+
+<style id="v82l-task-filter-separation">
+/* Slightly separate the three task-view choices without changing their overall layout. */
+.age-filter-group{
+  display:flex!important;
+  align-items:center!important;
+  gap:0!important;
+}
+
+.age-filter-group .age-filter{
+  position:relative!important;
+  padding-left:11px!important;
+  padding-right:11px!important;
+}
+
+/* Soft dividers between TASKS / 7+ DAYS / OVERDUE. */
+.age-filter-group .age-filter + .age-filter::before{
+  content:""!important;
+  position:absolute!important;
+  left:0!important;
+  top:24%!important;
+  bottom:24%!important;
+  width:1px!important;
+  background:#d8ddda!important;
+}
+
+/* Search is now a compact icon-only control. */
+#utilityToggle.quick-search-toggle{
+  min-width:30px!important;
+  width:30px!important;
+  height:30px!important;
+  padding:0!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:0!important;
+}
+#utilityToggle .quick-search-icon{
+  width:17px!important;
+  height:17px!important;
+}
+</style>
+
 </head>
 <body class="sf-auth-pending">
 
@@ -3798,7 +3841,7 @@ body:not(.sf-auth-pending) #floatingNewTask{
       <button class="age-filter" data-age-view="old" type="button">7+ DAYS (0)</button>
       <button class="age-filter overdue-filter" data-age-view="overdue" type="button">OVERDUE (0)</button>
     </div>
-    <button id="utilityToggle" class="quick-search-toggle" type="button" aria-expanded="false" aria-label="Search and list options"><svg class="quick-search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m15.5 15.5 5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span>SEARCH</span></button>
+    <button id="utilityToggle" class="quick-search-toggle" type="button" aria-expanded="false" aria-label="Search and list options"><svg class="quick-search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m15.5 15.5 5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
   </div>
 </div>
 <div id="activeFilterStatus" class="active-filter-status" hidden>
