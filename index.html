@@ -3189,6 +3189,14 @@ body:not(.sf-auth-pending) #floatingNewTask{
 }
 </style>
 
+<style id="v81h-invite-refinement">
+#detailInviteCreator[hidden]{display:none!important}
+.v81g-invite-choices button{min-width:0!important}
+.v81g-invite-label{display:block!important;flex:1 1 auto!important;min-width:0!important;max-width:calc(100% - 72px)!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+.v81g-invite-check,.v81g-invite-status,.v81h-invite-hide{flex:0 0 auto!important;margin-left:auto!important;white-space:nowrap!important}
+.v81h-invite-hide{color:#9aa19e!important;font-size:14px!important;font-weight:500!important}
+@media(max-width:520px){.v81g-invite-label{max-width:calc(100% - 68px)!important}}
+</style>
 </head>
 <body class="sf-auth-pending">
 
@@ -3365,7 +3373,7 @@ body:not(.sf-auth-pending) #floatingNewTask{
       <div id="detailInviteEditor" class="details-editor v81g-invite-editor" hidden>
         <select id="detailInvite" hidden></select>
         <div id="detailInviteChoices" class="v81g-invite-choices"></div>
-        <button id="detailAddInviteChoice" class="v81g-add-invite-choice" type="button">+ Invite Someone</button>
+        <button id="detailAddInviteChoice" class="v81g-add-invite-choice" type="button">+ Invite Someone New</button>
         <div id="detailInviteCreator" class="details-inline-create v81g-invite-creator" hidden>
           <input id="detailInviteName" placeholder="Email address" maxlength="80">
           <button id="detailInviteAdd" type="button">Add</button>
@@ -4304,12 +4312,15 @@ document.querySelectorAll('.direct-choice-list[data-choice-for]').forEach(list=>
 
 let detailTaskId=null;
 
+function getHiddenInviteNames(){try{return JSON.parse(localStorage.getItem('starfish_hidden_invite_names')||'[]')}catch(e){return []}}
+function setHiddenInviteNames(a){localStorage.setItem('starfish_hidden_invite_names',JSON.stringify(a||[]))}
 function renderDetailInviteChoices(){
   const t=findTask(detailTaskId);
   const wrap=document.getElementById('detailInviteChoices');
   if(!t||!wrap)return;
   const active=(t.inviteStatus==='pending'||t.inviteStatus==='accepted')?(t.invitedUser||''):'';
-  const names=[...new Set([...getInviteNames(),...(active?[active]:[])])];
+  const hidden=getHiddenInviteNames();
+  const names=[...new Set([...getInviteNames(),...(active?[active]:[])])].filter(n=>active===n||!hidden.includes(n));
   const choices=[{value:'',label:'No one'},...names.map(n=>({value:n,label:n}))];
   wrap.innerHTML=choices.map(c=>{
     const selected=active===c.value;
@@ -4320,6 +4331,8 @@ function renderDetailInviteChoices(){
         : '<span class="v81g-invite-status">Pending</span>';
     }else if(selected){
       right='<span class="v81g-invite-check" aria-label="Selected">✓</span>';
+    }else if(c.value){
+      right=`<span class="v81h-invite-hide" data-hide-detail-invite="${esc(c.value)}">Hide?</span>`;
     }
     return `<button type="button" data-detail-invite="${esc(c.value)}"><span class="v81g-invite-label">${esc(c.label)}</span>${right}</button>`;
   }).join('');
@@ -4548,6 +4561,17 @@ document.getElementById('detailReminderClear').addEventListener('click',()=>{
 
 
 document.getElementById('detailInviteChoices').addEventListener('click',e=>{
+  const hide=e.target.closest('[data-hide-detail-invite]');
+  if(hide){
+    e.stopPropagation();
+    const name=hide.dataset.hideDetailInvite;
+    if(name && confirm(`Hide “${name}”? You can restore it later by entering the same email/name through + Invite Someone New.`)){
+      const hidden=getHiddenInviteNames();
+      if(!hidden.includes(name)){hidden.push(name);setHiddenInviteNames(hidden)}
+      renderDetailInviteChoices();
+    }
+    return;
+  }
   const btn=e.target.closest('[data-detail-invite]');
   if(!btn)return;
   const t=findTask(detailTaskId);if(!t)return;
@@ -4595,7 +4619,10 @@ document.getElementById('detailInvite').addEventListener('change',e=>{
 
 document.getElementById('detailInviteAdd').addEventListener('click',()=>{
   const input=document.getElementById('detailInviteName');
-  const name=input.value.trim();if(!name){input.focus();return;}
+  let name=input.value.trim();if(!name){input.focus();return;}
+  const hidden=getHiddenInviteNames();
+  const hiddenMatch=hidden.find(n=>n.toLowerCase()===name.toLowerCase());
+  if(hiddenMatch){setHiddenInviteNames(hidden.filter(n=>n!==hiddenMatch));name=hiddenMatch;}
   saveInviteName(name);
   const sel=document.getElementById('detailInvite');
   sel.innerHTML=inviteOptions(name);sel.value=name;
