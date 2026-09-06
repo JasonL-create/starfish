@@ -3716,6 +3716,99 @@ body:not(.sf-auth-pending) #floatingNewTask{
 }
 </style>
 
+
+<style id="v82m-uniform-search-dropdowns">
+/* View / Sort / Category expanded choices now use the same simple list language
+   as Category and Invite in Task Details. */
+#viewEditor,
+#sortEditor,
+#filterEditor{
+  padding:2px 4px 8px 42px!important;
+  margin:0!important;
+  border:0!important;
+  background:transparent!important;
+}
+
+#viewEditor .direct-choice-list,
+#sortEditor .direct-choice-list,
+#categoryChoiceList{
+  display:flex!important;
+  flex-direction:column!important;
+  gap:0!important;
+  padding:0!important;
+}
+
+#viewEditor .direct-choice-list button,
+#sortEditor .direct-choice-list button,
+#categoryChoiceList button{
+  display:flex!important;
+  align-items:center!important;
+  gap:10px!important;
+  width:100%!important;
+  min-height:42px!important;
+  margin:0!important;
+  padding:8px 4px!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  color:var(--text)!important;
+  text-align:left!important;
+  font:inherit!important;
+  font-weight:400!important;
+  box-shadow:none!important;
+}
+
+#viewEditor .direct-choice-list button:hover,
+#sortEditor .direct-choice-list button:hover,
+#categoryChoiceList button:hover{
+  background:transparent!important;
+}
+
+.v82m-choice-dot{
+  width:5px!important;
+  height:5px!important;
+  min-width:5px!important;
+  border-radius:50%!important;
+  background:#78847f!important;
+}
+.v82m-choice-label{
+  flex:1!important;
+  min-width:0!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+.v82m-choice-check{
+  margin-left:auto!important;
+  color:var(--starfish-green,#285f4b)!important;
+  font-size:19px!important;
+  line-height:1!important;
+  font-weight:800!important;
+}
+.v82m-choice-check[hidden]{display:none!important}
+
+#viewEditor button.selected .v82m-choice-label,
+#sortEditor button.selected .v82m-choice-label,
+#categoryChoiceList button.selected .v82m-choice-label{
+  color:var(--starfish-green,#285f4b)!important;
+  font-weight:650!important;
+}
+
+/* Category row uses the tag icon and Category wording; keep same row sizing as View/Sort. */
+#filterRow .option-icon{
+  color:var(--starfish-green,#285f4b)!important;
+}
+
+@media(max-width:520px){
+  #viewEditor,
+  #sortEditor,
+  #filterEditor{
+    padding-left:39px!important;
+    padding-right:2px!important;
+  }
+}
+</style>
+
 </head>
 <body class="sf-auth-pending">
 
@@ -3789,12 +3882,14 @@ body:not(.sf-auth-pending) #floatingNewTask{
       <div id="viewEditor" class="filter-editor direct-choice-editor" hidden>
         <select id="viewBy" class="tool-select filter-select direct-choice-select" aria-label="View tasks">
           <option value="current">Current</option>
+          <option value="overdue">Overdue</option>
           <option value="completed">Completed</option>
           <option value="shared-out">Tasks I Shared</option>
           <option value="shared-in">Tasks Shared With Me</option>
         </select>
         <div class="direct-choice-list" data-choice-for="viewBy">
           <button type="button" data-choice="current">Current</button>
+          <button type="button" data-choice="overdue">Overdue</button>
           <button type="button" data-choice="completed">Completed</button>
           <button type="button" data-choice="shared-out">Tasks I Shared</button>
           <button type="button" data-choice="shared-in">Tasks Shared With Me</button>
@@ -3811,23 +3906,21 @@ body:not(.sf-auth-pending) #floatingNewTask{
           <option value="created-desc">Newest</option>
           <option value="created-asc">Oldest</option>
           <option value="due">Due date</option>
-          <option value="completed-desc">Recently completed</option>
         </select>
         <div class="direct-choice-list" data-choice-for="sortBy">
           <button type="button" data-choice="created-desc">Newest</button>
           <button type="button" data-choice="created-asc">Oldest</button>
           <button type="button" data-choice="due">Due Date</button>
-          <button type="button" data-choice="completed-desc">Recently Completed</button>
         </div>
       </div>
       <button id="filterRow" class="list-options-row list-options-button-row" type="button">
         <span class="option-label"><span class="option-icon"><svg class="option-svg" viewBox="0 0 24 24" aria-hidden="true">
-  <path d="M4 5h16l-6.3 7.2v5.1l-3.4 1.7v-6.8L4 5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-</svg></span><span id="filterRowLabel">Filter</span></span>
+  <path d="M4 5h8l8 8-7 7-9-9V5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+  <circle cx="9" cy="9" r="1.4" fill="currentColor"/>
+</svg></span><span id="filterRowLabel">Category</span></span>
         <span class="details-value option-value-wrap"><span id="filterSummary">All</span><span class="row-chevron">⌄</span></span>
       </button>
       <div id="filterEditor" class="filter-editor direct-choice-editor" hidden>
-        <label class="filter-section-label">Category</label>
         <select id="categoryFilter" class="tool-select filter-select direct-choice-select" aria-label="Filter tasks"><option value="all">All categories</option><option value="none">No category</option></select>
         <div id="categoryChoiceList" class="direct-choice-list"></div>
       </div>
@@ -4281,7 +4374,29 @@ function isOverdue(t){
 }
 function isOldTask(t){return !t.hidden && (Date.now()-new Date(t.createdAt).getTime()) >= 7*24*60*60*1000 && !isFullyComplete(t);}
 
+
+function syncUtilityDirectChoices(){
+  document.querySelectorAll('.direct-choice-list[data-choice-for]').forEach(list=>{
+    const select=document.getElementById(list.dataset.choiceFor);
+    if(!select)return;
+    list.querySelectorAll('button[data-choice]').forEach(btn=>{
+      const selected=btn.dataset.choice===select.value;
+      btn.classList.toggle('selected',selected);
+      let label=btn.querySelector('.v82m-choice-label');
+      if(!label){
+        const text=btn.textContent.trim();
+        btn.textContent='';
+        btn.innerHTML=`<span class="v82m-choice-dot"></span><span class="v82m-choice-label">${esc(text)}</span><span class="v82m-choice-check"${selected?'':' hidden'}>✓</span>`;
+      }else{
+        const check=btn.querySelector('.v82m-choice-check');
+        if(check)check.hidden=!selected;
+      }
+    });
+  });
+}
+
 function syncListOptionSummaries(){
+  syncUtilityDirectChoices();
   const viewSelect=document.getElementById('viewBy');
   const sortSelect=document.getElementById('sortBy');
   const catSelect=document.getElementById('categoryFilter');
@@ -4302,7 +4417,7 @@ function syncListOptionSummaries(){
   const filterLabel=document.getElementById('filterRowLabel');
   if(viewLabel)viewLabel.textContent=`View - ${viewText}`;
   if(sortLabel)sortLabel.textContent=`Sort by - ${sortText}`;
-  if(filterLabel)filterLabel.textContent=catText?`Filter - ${catText}`:'Filter';
+  if(filterLabel)filterLabel.textContent=catText?`Category - ${catText}`:'Category';
 }
 function updateActiveFilterStatus(){
   const q=document.getElementById('search')?.value.trim()||'';
@@ -4412,6 +4527,7 @@ function render(){
     });
   }else{
     if(view==='current') tasks=tasks.filter(t=>!t.hidden);
+    else if(view==='overdue') tasks=tasks.filter(t=>!t.hidden && isOverdue(t));
     else if(view==='completed') tasks=tasks.filter(t=>t.hidden);
     else if(view==='shared-out') tasks=tasks.filter(t=>!t.hidden && !t.shared && !!t.invitedUser);
     else if(view==='shared-in') tasks=tasks.filter(t=>!t.hidden && !!t.shared);
@@ -4527,7 +4643,10 @@ function renderFilters(){
   const choiceList=document.getElementById('categoryChoiceList');
   if(choiceList){
     const choices=[...state.categories.map(c=>[c,c])];
-    choiceList.innerHTML=choices.map(([value,label])=>`<button type="button" data-category-choice="${esc(value)}" class="${sel.value===value?'selected':''}">${esc(label)}</button>`).join('');
+    choiceList.innerHTML=choices.map(([value,label])=>{
+      const selected=sel.value===value;
+      return `<button type="button" data-category-choice="${esc(value)}" class="${selected?'selected':''}"><span class="v82m-choice-dot"></span><span class="v82m-choice-label">${esc(label)}</span>${selected?'<span class="v82m-choice-check">✓</span>':''}</button>`;
+    }).join('');
     choiceList.querySelectorAll('[data-category-choice]').forEach(btn=>btn.addEventListener('click',()=>{
       sel.value=btn.dataset.categoryChoice;
       sel.dispatchEvent(new Event('change',{bubbles:true}));
@@ -4615,6 +4734,7 @@ function setActiveTab(){
   if(v)v.value=view;
   const summary=document.getElementById('viewSummary');
   if(summary)summary.textContent=
+    view==='overdue'?'Overdue':
     view==='completed'?'Completed':
     view==='shared-out'?'Tasks I Shared':
     view==='shared-in'?'Tasks Shared With Me':'Current';
