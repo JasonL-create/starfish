@@ -3527,98 +3527,24 @@ body:not(.sf-auth-pending) #floatingNewTask{
 </style>
 
 
-<style id="v82e-remove-datetime-box-in-box">
-/* Keep the expanded Due/Reminder controls visually inside the existing group
-   without drawing a second nested card around them. */
+<style id="v82g-date-box-width-only-fix">
 #newTaskDueEditor .v82c-datetime-editor,
 #newTaskReminderFields .v82c-datetime-editor,
 #detailDueEditor .v82c-datetime-editor,
 #detailReminderEditor .v82c-datetime-editor{
-  border:0!important;
-  border-radius:0!important;
-  background:transparent!important;
-  padding:8px 4px 10px!important;
-}
-
-/* Remove the extra editor-frame feel while preserving spacing. */
-#newTaskDueEditor,
-#newTaskReminderFields,
-#detailDueEditor,
-#detailReminderEditor{
-  padding:2px 0 8px!important;
-}
-
-/* Keep date/time controls themselves clearly defined. */
-#newTaskDueEditor input[type="date"],
-#newTaskReminderFields input[type="date"],
-#detailDueEditor input[type="date"],
-#detailReminderEditor input[type="date"],
-#newTaskDueEditor .reminder-time-selects select,
-#newTaskReminderFields .reminder-time-selects select,
-#detailDueEditor .reminder-time-selects select,
-#detailReminderEditor .reminder-time-selects select{
-  background:#fff!important;
-}
-
-@media(max-width:520px){
-  #newTaskDueEditor .v82c-datetime-editor,
-  #newTaskReminderFields .v82c-datetime-editor,
-  #detailDueEditor .v82c-datetime-editor,
-  #detailReminderEditor .v82c-datetime-editor{
-    padding:7px 2px 9px!important;
-  }
-}
-</style>
-
-
-<style id="v82f-datetime-layout-final">
-/* Expanded Due/Reminder areas should be part of the existing schedule group,
-   not a second bordered editor card. This overrides the older V81 editor frame. */
-#newTaskDueEditor,
-#newTaskReminderFields,
-#detailDueEditor,
-#detailReminderEditor{
-  margin:0!important;
-  padding:6px 4px 10px!important;
-  border:0!important;
-  border-radius:0!important;
-  background:transparent!important;
-  width:100%!important;
-  max-width:100%!important;
   box-sizing:border-box!important;
-}
-
-/* The internal wrapper is layout-only. */
-#newTaskDueEditor .v82c-datetime-editor,
-#newTaskReminderFields .v82c-datetime-editor,
-#detailDueEditor .v82c-datetime-editor,
-#detailReminderEditor .v82c-datetime-editor{
-  margin:0!important;
-  padding:0!important;
-  border:0!important;
-  border-radius:0!important;
-  background:transparent!important;
-  width:100%!important;
   max-width:100%!important;
-  box-sizing:border-box!important;
-  gap:9px!important;
 }
 
-/* Date on its own full-width line; time directly below. */
 #newTaskDueEditor .detail-reminder-picker,
 #newTaskReminderFields .detail-reminder-picker,
 #detailDueEditor .detail-reminder-picker,
 #detailReminderEditor .detail-reminder-picker{
-  display:flex!important;
-  flex-direction:column!important;
-  width:100%!important;
+  box-sizing:border-box!important;
   max-width:100%!important;
   min-width:0!important;
-  gap:9px!important;
-  box-sizing:border-box!important;
 }
 
-/* Stop the native date input from overflowing its parent on iOS/Safari. */
 #newTaskDueEditor input[type="date"],
 #newTaskReminderFields input[type="date"],
 #detailDueEditor input[type="date"],
@@ -3628,84 +3554,8 @@ body:not(.sf-auth-pending) #floatingNewTask{
   max-width:100%!important;
   min-width:0!important;
   box-sizing:border-box!important;
-  min-height:48px!important;
-  margin:0!important;
-}
-
-/* Equal, predictable time controls that cannot push outside the group. */
-#newTaskDueEditor .reminder-time-selects,
-#newTaskReminderFields .reminder-time-selects,
-#detailDueEditor .reminder-time-selects,
-#detailReminderEditor .reminder-time-selects{
-  display:grid!important;
-  grid-template-columns:minmax(0,1fr) 12px minmax(0,1fr) minmax(0,1fr)!important;
-  gap:7px!important;
-  align-items:center!important;
-  width:100%!important;
-  max-width:100%!important;
-  min-width:0!important;
-  box-sizing:border-box!important;
-}
-#newTaskDueEditor .reminder-time-selects select,
-#newTaskReminderFields .reminder-time-selects select,
-#detailDueEditor .reminder-time-selects select,
-#detailReminderEditor .reminder-time-selects select{
-  width:100%!important;
-  max-width:100%!important;
-  min-width:0!important;
-  box-sizing:border-box!important;
-  min-height:46px!important;
-  margin:0!important;
-  padding-left:9px!important;
-  padding-right:9px!important;
-}
-#newTaskDueEditor .time-colon,
-#newTaskReminderFields .time-colon,
-#detailDueEditor .time-colon,
-#detailReminderEditor .time-colon{
-  width:12px!important;
-  text-align:center!important;
-  margin:0!important;
-}
-
-/* Clear sits below the time row with consistent breathing room. */
-#newTaskDueEditor .v82c-clear-datetime,
-#newTaskReminderFields .v82c-clear-datetime,
-#detailDueEditor .v82c-clear-datetime,
-#detailReminderEditor .v82c-clear-datetime{
-  align-self:flex-start!important;
-  margin:1px 0 0!important;
-  box-sizing:border-box!important;
-}
-
-/* Keep the next schedule row visually separate from an expanded editor. */
-#newTaskDueEditor + #toggleNewTaskReminder,
-#detailDueEditor + #detailReminderRow{
-  margin-top:1px!important;
-}
-
-@media(max-width:520px){
-  #newTaskDueEditor,
-  #newTaskReminderFields,
-  #detailDueEditor,
-  #detailReminderEditor{
-    padding:5px 2px 9px!important;
-  }
-
-  #newTaskDueEditor .reminder-time-selects,
-  #newTaskReminderFields .reminder-time-selects,
-  #detailDueEditor .reminder-time-selects,
-  #detailReminderEditor .reminder-time-selects{
-    grid-template-columns:minmax(0,1fr) 10px minmax(0,1fr) minmax(0,1.05fr)!important;
-    gap:6px!important;
-  }
-
-  #newTaskDueEditor .time-colon,
-  #newTaskReminderFields .time-colon,
-  #detailDueEditor .time-colon,
-  #detailReminderEditor .time-colon{
-    width:10px!important;
-  }
+  margin-left:0!important;
+  margin-right:0!important;
 }
 </style>
 
