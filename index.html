@@ -3814,8 +3814,10 @@ body:not(.sf-auth-pending) #floatingNewTask{
 .task-card.sf-genie-hiding{
   pointer-events:none!important;
   overflow:hidden!important;
-  will-change:transform,opacity,height,padding,border-width;
   transform-origin:right center!important;
+  backface-visibility:hidden!important;
+  -webkit-backface-visibility:hidden!important;
+  contain:paint!important;
 }
 </style>
 
@@ -4519,6 +4521,11 @@ function bindPendingInviteCards(){
 }
 
 function render(){
+  if(document.querySelector('.task-card.sf-genie-hiding')){
+    window.__sfDeferredRender=true;
+    return;
+  }
+  window.__sfDeferredRender=false;
   syncListOptionSummaries();
   renderFilters();
   syncListOptionSummaries();
@@ -4675,68 +4682,73 @@ async function animateTaskHideGenie(card){
   const cs=getComputedStyle(card);
   const startPadTop=cs.paddingTop;
   const startPadBottom=cs.paddingBottom;
+  let suction=null;
+  let collapse=null;
 
-  // Phase 1: a quick "suction/genie" pull toward the right edge.
-  const genie=card.animate([
-    {
-      transform:'translateX(0) scaleX(1) scaleY(1) skewY(0deg)',
-      opacity:1,
-      clipPath:'polygon(0 0,100% 0,100% 100%,0 100%)'
-    },
-    {
-      offset:.48,
-      transform:'translateX(10%) scaleX(.88) scaleY(.94) skewY(-1deg)',
-      opacity:.96,
-      clipPath:'polygon(6% 4%,100% 0,100% 100%,6% 96%)'
-    },
-    {
-      offset:.78,
-      transform:'translateX(42%) scaleX(.48) scaleY(.58) skewY(-4deg)',
-      opacity:.72,
-      clipPath:'polygon(44% 22%,100% 4%,100% 96%,44% 78%)'
-    },
-    {
-      transform:'translateX(82%) scaleX(.08) scaleY(.18) skewY(-7deg)',
-      opacity:0,
-      clipPath:'polygon(92% 46%,100% 42%,100% 58%,92% 54%)'
-    }
-  ],{
-    duration:390,
-    easing:'cubic-bezier(.2,.75,.25,1)',
-    fill:'forwards'
-  });
+  try{
+    // Phase 1: transform-only suction toward the right edge.
+    // Avoid clip-path/skew here; those were causing full-screen Safari repaints.
+    suction=card.animate([
+      {transform:'translate3d(0,0,0) scale(1,1)',opacity:1},
+      {offset:.52,transform:'translate3d(12%,0,0) scale(.82,.95)',opacity:.96},
+      {offset:.80,transform:'translate3d(44%,0,0) scale(.42,.62)',opacity:.72},
+      {transform:'translate3d(86%,0,0) scale(.06,.16)',opacity:0}
+    ],{
+      duration:360,
+      easing:'cubic-bezier(.22,.72,.24,1)',
+      fill:'forwards'
+    });
 
-  await genie.finished.catch(()=>{});
+    await suction.finished.catch(()=>{});
+    suction.cancel();
 
-  // Reset transform visually while keeping it invisible, then collapse its
-  // actual layout height so the cards above/below slide together.
-  card.style.opacity='0';
-  card.style.transform='none';
-  card.style.clipPath='none';
-  card.style.height=startHeight+'px';
+    // Lock the card's current layout box while invisible.
+    card.style.opacity='0';
+    card.style.transform='none';
+    card.style.height=startHeight+'px';
+    card.style.minHeight='0';
+    card.style.marginTop=cs.marginTop;
+    card.style.marginBottom=cs.marginBottom;
 
-  const collapse=card.animate([
-    {
-      height:startHeight+'px',
-      paddingTop:startPadTop,
-      paddingBottom:startPadBottom,
-      opacity:0
-    },
-    {
-      height:'0px',
-      paddingTop:'0px',
-      paddingBottom:'0px',
-      borderTopWidth:'0px',
-      borderBottomWidth:'0px',
-      opacity:0
-    }
-  ],{
-    duration:210,
-    easing:'cubic-bezier(.4,0,.2,1)',
-    fill:'forwards'
-  });
+    // Phase 2: collapse only layout dimensions so neighboring cards close the gap.
+    collapse=card.animate([
+      {
+        height:startHeight+'px',
+        paddingTop:startPadTop,
+        paddingBottom:startPadBottom,
+        marginTop:cs.marginTop,
+        marginBottom:cs.marginBottom,
+        opacity:0
+      },
+      {
+        height:'0px',
+        paddingTop:'0px',
+        paddingBottom:'0px',
+        marginTop:'0px',
+        marginBottom:'0px',
+        borderTopWidth:'0px',
+        borderBottomWidth:'0px',
+        opacity:0
+      }
+    ],{
+      duration:190,
+      easing:'cubic-bezier(.4,0,.2,1)',
+      fill:'forwards'
+    });
 
-  await collapse.finished.catch(()=>{});
+    await collapse.finished.catch(()=>{});
+    collapse.cancel();
+  } finally {
+    try{suction?.cancel()}catch(e){}
+    try{collapse?.cancel()}catch(e){}
+    card.classList.remove('sf-genie-hiding');
+    card.style.opacity='';
+    card.style.transform='';
+    card.style.height='';
+    card.style.minHeight='';
+    card.style.marginTop='';
+    card.style.marginBottom='';
+  }
 }
 
 function bindTaskEvents(){
@@ -4812,7 +4824,12 @@ function bindTaskEvents(){
     const hide=card.querySelector('.hide-confirm');
     if(hide)hide.addEventListener('click',async()=>{
       if(card.classList.contains('sf-genie-hiding'))return;
-      await animateTaskHideGenie(card);
+      hide.disabled=true;
+      try{
+        await animateTaskHideGenie(card);
+      }catch(err){
+        console.warn('Task hide animation interrupted',err);
+      }
       t.hidden=true;
       t.completedAt=new Date().toISOString();
       save();
