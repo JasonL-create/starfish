@@ -3197,6 +3197,11 @@ body:not(.sf-auth-pending) #floatingNewTask{
 .v81h-invite-hide{color:#9aa19e!important;font-size:14px!important;font-weight:500!important}
 @media(max-width:520px){.v81g-invite-label{max-width:calc(100% - 68px)!important}}
 </style>
+
+<style id="v81i-hide-invite-modal">
+#hideInviteConfirm{z-index:230!important}
+</style>
+
 </head>
 <body class="sf-auth-pending">
 
@@ -4560,15 +4565,40 @@ document.getElementById('detailReminderClear').addEventListener('click',()=>{
 });
 
 
+
+let pendingHideInviteName=null;
+document.getElementById('cancelHideInvite').addEventListener('click',()=>{
+  pendingHideInviteName=null;
+  const m=document.getElementById('hideInviteConfirm');
+  m.classList.remove('open');m.setAttribute('aria-hidden','true');
+});
+document.getElementById('yesHideInvite').addEventListener('click',()=>{
+  if(pendingHideInviteName){
+    const hidden=getHiddenInviteNames();
+    if(!hidden.includes(pendingHideInviteName)){
+      hidden.push(pendingHideInviteName);
+      setHiddenInviteNames(hidden);
+    }
+  }
+  pendingHideInviteName=null;
+  const m=document.getElementById('hideInviteConfirm');
+  m.classList.remove('open');m.setAttribute('aria-hidden','true');
+  renderDetailInviteChoices();
+});
+document.getElementById('hideInviteConfirm').addEventListener('click',e=>{
+  if(e.target===e.currentTarget)document.getElementById('cancelHideInvite').click();
+});
+
 document.getElementById('detailInviteChoices').addEventListener('click',e=>{
   const hide=e.target.closest('[data-hide-detail-invite]');
   if(hide){
     e.stopPropagation();
     const name=hide.dataset.hideDetailInvite;
-    if(name && confirm(`Hide “${name}”? You can restore it later by entering the same email/name through + Invite Someone New.`)){
-      const hidden=getHiddenInviteNames();
-      if(!hidden.includes(name)){hidden.push(name);setHiddenInviteNames(hidden)}
-      renderDetailInviteChoices();
+    if(name){
+      pendingHideInviteName=name;
+      document.getElementById('hideInviteText').textContent=`Hide “${name}”? Existing tasks will keep this person. To restore them later, use + Invite Someone New and enter “${name}” again.`;
+      document.getElementById('hideInviteConfirm').classList.add('open');
+      document.getElementById('hideInviteConfirm').setAttribute('aria-hidden','false');
     }
     return;
   }
@@ -5675,6 +5705,18 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
   syncOpenPanelSpace();
 })();
 </script>
+
+
+<div id="hideInviteConfirm" class="modal" aria-hidden="true">
+  <div class="confirm-box">
+    <h3>Hide person?</h3>
+    <p id="hideInviteText"></p>
+    <div class="confirm-actions">
+      <button id="cancelHideInvite" type="button">Cancel</button>
+      <button id="yesHideInvite" class="primary" type="button">Yes, hide</button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
