@@ -4825,15 +4825,37 @@ function bindTaskEvents(){
     if(hide)hide.addEventListener('click',async()=>{
       if(card.classList.contains('sf-genie-hiding'))return;
       hide.disabled=true;
+      window.__sfTaskHideAnimating=true;
+
+      const completedAt=new Date().toISOString();
+      const firstTask=findTask(id);
+      if(firstTask){
+        firstTask.hidden=true;
+        firstTask.completedAt=completedAt;
+        save();
+      }
+
       try{
         await animateTaskHideGenie(card);
       }catch(err){
         console.warn('Task hide animation interrupted',err);
       }
-      t.hidden=true;
-      t.completedAt=new Date().toISOString();
-      save();
+
+      // Re-find the task from current state instead of relying on the older
+      // object reference. This prevents a realtime refresh from restoring it.
+      const liveTask=findTask(id);
+      if(liveTask){
+        liveTask.hidden=true;
+        liveTask.completedAt=completedAt;
+        save();
+      }
+
       render();
+
+      // Keep stale realtime echoes out until the scheduled cloud save has begun.
+      setTimeout(()=>{
+        window.__sfTaskHideAnimating=false;
+      },700);
     });
     const keep=card.querySelector('.keep');if(keep)keep.addEventListener('click',()=>{ /* intentionally remains visible */ });
   });
@@ -6407,7 +6429,7 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
   }
 
   async function reloadFromCloudRealtime() {
-    if (!activeUser || !cloudReady || syncRunning || suppressRealtimeReload) return;
+    if (!activeUser || !cloudReady || syncRunning || suppressRealtimeReload || window.__sfTaskHideAnimating) return;
     try {
       setCloudStatus('Syncing…', true);
       const fresh = await loadCloudState();
@@ -6422,7 +6444,7 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
   }
 
   function scheduleRealtimeReload() {
-    if (!activeUser || !cloudReady || suppressRealtimeReload) return;
+    if (!activeUser || !cloudReady || suppressRealtimeReload || window.__sfTaskHideAnimating) return;
     clearTimeout(realtimeReloadTimer);
     realtimeReloadTimer = setTimeout(reloadFromCloudRealtime, 250);
   }
