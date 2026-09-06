@@ -3526,6 +3526,50 @@ body:not(.sf-auth-pending) #floatingNewTask{
 }
 </style>
 
+
+<style id="v82e-remove-datetime-box-in-box">
+/* Keep the expanded Due/Reminder controls visually inside the existing group
+   without drawing a second nested card around them. */
+#newTaskDueEditor .v82c-datetime-editor,
+#newTaskReminderFields .v82c-datetime-editor,
+#detailDueEditor .v82c-datetime-editor,
+#detailReminderEditor .v82c-datetime-editor{
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  padding:8px 4px 10px!important;
+}
+
+/* Remove the extra editor-frame feel while preserving spacing. */
+#newTaskDueEditor,
+#newTaskReminderFields,
+#detailDueEditor,
+#detailReminderEditor{
+  padding:2px 0 8px!important;
+}
+
+/* Keep date/time controls themselves clearly defined. */
+#newTaskDueEditor input[type="date"],
+#newTaskReminderFields input[type="date"],
+#detailDueEditor input[type="date"],
+#detailReminderEditor input[type="date"],
+#newTaskDueEditor .reminder-time-selects select,
+#newTaskReminderFields .reminder-time-selects select,
+#detailDueEditor .reminder-time-selects select,
+#detailReminderEditor .reminder-time-selects select{
+  background:#fff!important;
+}
+
+@media(max-width:520px){
+  #newTaskDueEditor .v82c-datetime-editor,
+  #newTaskReminderFields .v82c-datetime-editor,
+  #detailDueEditor .v82c-datetime-editor,
+  #detailReminderEditor .v82c-datetime-editor{
+    padding:7px 2px 9px!important;
+  }
+}
+</style>
+
 </head>
 <body class="sf-auth-pending">
 
