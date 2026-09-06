@@ -3452,6 +3452,80 @@ body:not(.sf-auth-pending) #floatingNewTask{
 }
 </style>
 
+
+<style id="v82d-datetime-spacing-polish">
+/* One spacing language for all expanded date/time editors. */
+#newTaskDueEditor,
+#newTaskReminderFields,
+#detailDueEditor,
+#detailReminderEditor{
+  padding:8px 4px 10px!important;
+  margin:0!important;
+}
+#newTaskDueEditor .v82c-datetime-editor,
+#newTaskReminderFields .v82c-datetime-editor,
+#detailDueEditor .v82c-datetime-editor,
+#detailReminderEditor .v82c-datetime-editor{
+  padding:10px!important;
+  border:1px solid var(--line)!important;
+  border-radius:13px!important;
+  background:#fbfbfa!important;
+}
+#newTaskDueEditor .detail-reminder-picker,
+#newTaskReminderFields .detail-reminder-picker,
+#detailDueEditor .detail-reminder-picker,
+#detailReminderEditor .detail-reminder-picker{
+  gap:9px!important;
+}
+#newTaskDueEditor input[type="date"],
+#newTaskReminderFields input[type="date"],
+#detailDueEditor input[type="date"],
+#detailReminderEditor input[type="date"]{
+  min-height:48px!important;
+  background:#fff!important;
+}
+#newTaskDueEditor .reminder-time-selects,
+#newTaskReminderFields .reminder-time-selects,
+#detailDueEditor .reminder-time-selects,
+#detailReminderEditor .reminder-time-selects{
+  gap:7px!important;
+}
+#newTaskDueEditor .reminder-time-selects select,
+#newTaskReminderFields .reminder-time-selects select,
+#detailDueEditor .reminder-time-selects select,
+#detailReminderEditor .reminder-time-selects select{
+  min-height:46px!important;
+  background:#fff!important;
+}
+#newTaskDueEditor .v82c-clear-datetime,
+#newTaskReminderFields .v82c-clear-datetime,
+#detailDueEditor .v82c-clear-datetime,
+#detailReminderEditor .v82c-clear-datetime{
+  margin-top:1px!important;
+  background:#fff!important;
+}
+@media(max-width:520px){
+  #newTaskDueEditor,
+  #newTaskReminderFields,
+  #detailDueEditor,
+  #detailReminderEditor{
+    padding:7px 2px 9px!important;
+  }
+  #newTaskDueEditor .v82c-datetime-editor,
+  #newTaskReminderFields .v82c-datetime-editor,
+  #detailDueEditor .v82c-datetime-editor,
+  #detailReminderEditor .v82c-datetime-editor{
+    padding:9px!important;
+  }
+  #newTaskDueEditor .reminder-time-selects,
+  #newTaskReminderFields .reminder-time-selects,
+  #detailDueEditor .reminder-time-selects,
+  #detailReminderEditor .reminder-time-selects{
+    grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) minmax(0,1.1fr)!important;
+  }
+}
+</style>
+
 </head>
 <body class="sf-auth-pending">
 
@@ -3666,7 +3740,7 @@ body:not(.sf-auth-pending) #floatingNewTask{
         <span class="details-value"><span id="detailReminderText">None</span><span>›</span></span>
       </button>
       <div id="detailReminderEditor" class="details-editor" hidden>
-        <div class="details-due-edit-row">
+        <div class="v82c-datetime-editor">
           <div class="detail-reminder-picker">
             <input id="detailReminderDate" type="date">
             <div class="reminder-time-selects">
@@ -3675,7 +3749,7 @@ body:not(.sf-auth-pending) #floatingNewTask{
               <select id="detailReminderPeriod" aria-label="AM or PM"><option>AM</option><option>PM</option></select>
             </div>
           </div>
-          <button id="detailReminderClear" type="button">Clear</button>
+          <button id="detailReminderClear" class="v82c-clear-datetime" type="button">Clear</button>
         </div>
       </div>
     </section>
@@ -3816,7 +3890,7 @@ body:not(.sf-auth-pending) #floatingNewTask{
         <span class="details-value"><span id="newTaskReminderLabel">None</span><span>›</span></span>
       </button>
       <div id="newTaskReminderFields" class="details-editor" hidden>
-        <div class="details-due-edit-row">
+        <div class="v82c-datetime-editor">
           <div class="detail-reminder-picker">
             <input id="newTaskReminderDate" type="date" aria-label="Reminder date">
             <div class="reminder-time-selects">
@@ -3825,6 +3899,7 @@ body:not(.sf-auth-pending) #floatingNewTask{
               <select id="newTaskReminderPeriod" aria-label="AM or PM"><option>AM</option><option>PM</option></select>
             </div>
           </div>
+          <button id="newTaskReminderClear" class="v82c-clear-datetime" type="button">Clear</button>
         </div>
       </div>
     </section>
@@ -4736,6 +4811,13 @@ document.getElementById('newTaskSendInvite').addEventListener('click',()=>{
       ? new Date(value).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})
       : 'None';
   });
+});
+
+
+document.getElementById('newTaskReminderClear').addEventListener('click',()=>{
+  setReminderPicker('newTaskReminder','');
+  document.getElementById('newTaskReminderLabel').textContent='None';
+  document.getElementById('newTaskReminderFields').hidden=false;
 });
 
 document.getElementById('createNewTask').addEventListener('click',()=>{
