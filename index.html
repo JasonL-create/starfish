@@ -3158,6 +3158,37 @@ body:not(.sf-auth-pending) #floatingNewTask{
 }
 </style>
 
+
+<style id="v81g-invite-list-layout">
+#detailInviteEditor.v81g-invite-editor{
+  margin:0 2px 8px!important;padding:0 4px 8px 52px!important;
+  border:0!important;border-radius:0!important;background:transparent!important;
+}
+.v81g-invite-choices{display:flex;flex-direction:column;gap:0}
+.v81g-invite-choices button{
+  width:100%;min-height:43px;margin:0;padding:9px 4px;border:0;border-radius:0;
+  background:transparent;color:var(--text);text-align:left;font:inherit;font-weight:400;
+  display:flex;align-items:center;gap:10px;
+}
+.v81g-invite-choices button[data-detail-invite]:not([data-detail-invite=""])::before{
+  content:"";width:5px;height:5px;min-width:5px;border-radius:50%;background:#78847f;display:inline-block;
+}
+.v81g-invite-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.v81g-invite-check{margin-left:auto;color:var(--starfish-green,#285f4b);font-size:20px;line-height:1;font-weight:800}
+.v81g-invite-status{margin-left:auto;color:#9aa19e;font-size:13px;white-space:nowrap}
+.v81g-add-invite-choice{
+  width:100%;min-height:43px;margin:2px 0 0;padding:9px 4px;border:0;border-radius:0;
+  background:transparent;color:var(--starfish-green,#285f4b);text-align:left;font:inherit;font-weight:700;
+}
+#detailInviteCreator.v81g-invite-creator{
+  margin:5px 0 2px!important;padding:10px!important;border:1px solid #e1e7e3!important;
+  border-radius:11px!important;background:#fbfbfa!important;gap:8px!important;
+}
+@media(max-width:520px){
+  #detailInviteEditor.v81g-invite-editor{padding-left:43px!important;padding-right:2px!important}
+}
+</style>
+
 </head>
 <body class="sf-auth-pending">
 
@@ -3331,9 +3362,11 @@ body:not(.sf-auth-pending) #floatingNewTask{
         <span class="detail-row-label"><span class="detail-row-icon"><svg class="detail-line-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3.8 18c.5-3.7 2.3-5.7 5.2-5.7s4.7 2 5.2 5.7M18 7v6M15 10h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><span>Invite to task</span></span>
         <span class="details-value"><span id="detailInviteText">No one</span><span>›</span></span>
       </button>
-      <div id="detailInviteEditor" class="details-editor" hidden>
-        <select id="detailInvite"></select>
-        <div id="detailInviteCreator" class="details-inline-create" hidden>
+      <div id="detailInviteEditor" class="details-editor v81g-invite-editor" hidden>
+        <select id="detailInvite" hidden></select>
+        <div id="detailInviteChoices" class="v81g-invite-choices"></div>
+        <button id="detailAddInviteChoice" class="v81g-add-invite-choice" type="button">+ Invite Someone</button>
+        <div id="detailInviteCreator" class="details-inline-create v81g-invite-creator" hidden>
           <input id="detailInviteName" placeholder="Email address" maxlength="80">
           <button id="detailInviteAdd" type="button">Add</button>
         </div>
@@ -4270,6 +4303,28 @@ document.querySelectorAll('.direct-choice-list[data-choice-for]').forEach(list=>
 
 
 let detailTaskId=null;
+
+function renderDetailInviteChoices(){
+  const t=findTask(detailTaskId);
+  const wrap=document.getElementById('detailInviteChoices');
+  if(!t||!wrap)return;
+  const active=(t.inviteStatus==='pending'||t.inviteStatus==='accepted')?(t.invitedUser||''):'';
+  const names=[...new Set([...getInviteNames(),...(active?[active]:[])])];
+  const choices=[{value:'',label:'No one'},...names.map(n=>({value:n,label:n}))];
+  wrap.innerHTML=choices.map(c=>{
+    const selected=active===c.value;
+    let right='';
+    if(selected && c.value){
+      right=t.inviteStatus==='accepted'
+        ? '<span class="v81g-invite-check" aria-label="Accepted">✓</span>'
+        : '<span class="v81g-invite-status">Pending</span>';
+    }else if(selected){
+      right='<span class="v81g-invite-check" aria-label="Selected">✓</span>';
+    }
+    return `<button type="button" data-detail-invite="${esc(c.value)}"><span class="v81g-invite-label">${esc(c.label)}</span>${right}</button>`;
+  }).join('');
+}
+
 function openTaskDetails(id){
   const t=findTask(id); if(!t)return; detailTaskId=id;
 
@@ -4291,6 +4346,7 @@ function openTaskDetails(id){
   inviteSel.innerHTML=inviteOptions(activeInvite||'');
   inviteSel.value=activeInvite||'';
   inviteSel.disabled=!!activeInvite;
+  renderDetailInviteChoices();
   document.getElementById('detailSendInvite').hidden=true;
   document.getElementById('detailCancelInvite').hidden=!activeInvite;
 
@@ -4490,6 +4546,41 @@ document.getElementById('detailReminderClear').addEventListener('click',()=>{
   save();render();openTaskDetails(t.id);
 });
 
+
+document.getElementById('detailInviteChoices').addEventListener('click',e=>{
+  const btn=e.target.closest('[data-detail-invite]');
+  if(!btn)return;
+  const t=findTask(detailTaskId);if(!t)return;
+  const value=btn.dataset.detailInvite||'';
+  const active=(t.inviteStatus==='pending'||t.inviteStatus==='accepted')?(t.invitedUser||''):'';
+
+  // Existing active invite: keep the proven cancel-invite plumbing rather than replacing it here.
+  if(active){
+    if(value==='') document.getElementById('detailCancelInvite').click();
+    return;
+  }
+
+  if(!value){
+    document.getElementById('detailInviteEditor').hidden=true;
+    return;
+  }
+
+  const sel=document.getElementById('detailInvite');
+  sel.value=value;
+  document.getElementById('detailInviteCreator').hidden=true;
+  document.getElementById('detailSendInvite').hidden=false;
+  renderDetailInviteChoices();
+});
+
+document.getElementById('detailAddInviteChoice').addEventListener('click',()=>{
+  const t=findTask(detailTaskId);if(!t)return;
+  const active=(t.inviteStatus==='pending'||t.inviteStatus==='accepted')?(t.invitedUser||''):'';
+  if(active)return;
+  document.getElementById('detailInviteCreator').hidden=false;
+  document.getElementById('detailSendInvite').hidden=true;
+  setTimeout(()=>document.getElementById('detailInviteName').focus(),0);
+});
+
 document.getElementById('detailInvite').addEventListener('change',e=>{
   const send=document.getElementById('detailSendInvite');
   if(e.target.value==='__new__'){
@@ -4511,6 +4602,7 @@ document.getElementById('detailInviteAdd').addEventListener('click',()=>{
   document.getElementById('detailInviteCreator').hidden=true;
   document.getElementById('detailSendInvite').hidden=false;
   input.value='';
+  renderDetailInviteChoices();
 });
 document.getElementById('detailInviteName').addEventListener('keydown',e=>{
   if(e.key==='Enter'){
