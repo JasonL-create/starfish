@@ -7873,7 +7873,7 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
 
 
 
-<script id="v83q-last-card-genie-lock-js">
+<script id="v83s-stable-last-card-genie-js">
 (function(){
   function clamp(n,min,max){ return Math.max(min,Math.min(max,n)); }
 
@@ -7885,16 +7885,36 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
     card.style.removeProperty('transform');
     card.style.removeProperty('opacity');
     card.style.removeProperty('filter');
+    delete card.dataset.genieProgress;
   }
 
-  function pickNextCard(cards, vh){
+  /* Measure a card WITHOUT its genie transform.
+     This prevents the animation from changing its own trigger geometry. */
+  function rawRect(card){
+    const oldTransform = card.style.transform;
+    const oldOpacity = card.style.opacity;
+    const oldFilter = card.style.filter;
+
+    card.style.transform = 'none';
+    card.style.opacity = '1';
+    card.style.filter = 'none';
+
+    const r = card.getBoundingClientRect();
+
+    card.style.transform = oldTransform;
+    card.style.opacity = oldOpacity;
+    card.style.filter = oldFilter;
+
+    return r;
+  }
+
+  function lowestVisibleCard(cards, vh){
     let candidate = null;
     let bestTop = -Infinity;
 
     cards.forEach(card=>{
-      const r = card.getBoundingClientRect();
-      const visible = r.bottom > 0 && r.top < vh;
-      if(visible && r.top > bestTop){
+      const r = rawRect(card);
+      if(r.bottom > 0 && r.top < vh && r.top > bestTop){
         bestTop = r.top;
         candidate = card;
       }
@@ -7911,78 +7931,63 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
     }
 
     const cards = Array.from(document.querySelectorAll('.task-card'));
-    if(!cards.length){
-      activeCard = null;
-      return;
-    }
+    if(!cards.length) return;
 
-    const layoutH = window.innerHeight || document.documentElement.clientHeight;
-    const vv = window.visualViewport;
-    const vh = vv ? vv.height : layoutH;
+    const vh = window.visualViewport
+      ? window.visualViewport.height
+      : (window.innerHeight || document.documentElement.clientHeight);
 
-    /* Safari's floating toolbar can reveal content below the visual viewport.
-       Keep the genie running well past that edge so the card never appears
-       to re-expand underneath the browser chrome. */
-    const safariTail = 190;
-    const triggerStart = vh * 0.76;
-    const triggerEnd = vh + safariTail;
+    const triggerStart = vh * 0.78;
+    const triggerEnd = vh + 105;
 
-    // Keep the current card locked once its genie effect begins.
     if(activeCard && !document.body.contains(activeCard)){
       activeCard = null;
     }
 
     if(activeCard){
-      const r = activeCard.getBoundingClientRect();
+      const r = rawRect(activeCard);
 
-      // Do not release until it is well beyond the visible Safari area.
-      // This intentional extra tail prevents a partially hidden card from
-      // snapping back to full size underneath the floating browser controls.
-      if(r.top >= (vh + safariTail + 70) || r.bottom <= -70){
+      /* Hold the effect until the card is actually well below Safari's
+         visible area. It will not hand off early or snap back. */
+      if(r.top > vh + 120 || r.bottom < -80){
         clearGenie(activeCard);
-        delete activeCard.dataset.genieProgress;
         activeCard = null;
       }
     }
 
-    // Only choose a new card when the prior one has completely left.
     if(!activeCard){
-      const candidate = pickNextCard(cards, vh);
+      const candidate = lowestVisibleCard(cards, vh);
       if(candidate){
-        const r = candidate.getBoundingClientRect();
-        const p = clamp((r.top - triggerStart) / (triggerEnd - triggerStart), 0, 1);
-
-        // Don't lock it until the effect has actually begun.
-        if(p > 0){
+        const r = rawRect(candidate);
+        const initial = clamp((r.top - triggerStart) / (triggerEnd - triggerStart), 0, 1);
+        if(initial > 0){
           activeCard = candidate;
+          activeCard.dataset.genieProgress = String(initial);
         }
       }
     }
 
-    // Make sure no non-active card is carrying stale genie styling.
     cards.forEach(card=>{
-      if(card !== activeCard){
-        clearGenie(card);
-      }
+      if(card !== activeCard) clearGenie(card);
     });
 
     if(!activeCard) return;
 
-    const r = activeCard.getBoundingClientRect();
+    const r = rawRect(activeCard);
+    const rawP = clamp((r.top - triggerStart) / (triggerEnd - triggerStart), 0, 1);
+    const prevP = parseFloat(activeCard.dataset.genieProgress || '0');
 
-    // Once locked, progress is based on how far the card has moved toward/below
-    // the bottom and never allowed to reverse during that lock.
-    const raw = clamp((r.top - triggerStart) / (triggerEnd - triggerStart), 0, 1);
-    const prev = parseFloat(activeCard.dataset.genieProgress || '0');
-    const p = Math.max(prev, raw);
+    /* Once shrinking starts, never allow that same card to expand again. */
+    const p = Math.max(prevP, rawP);
     activeCard.dataset.genieProgress = String(p);
 
-    const scaleX = 1 - (0.065 * p);
-    const scaleY = 1 - (0.10 * p);
-    const translateY = 12 * p;
-    const rotateX = 3.2 * p;
-    const opacity = 1 - (0.11 * p);
-    const blur = 0.45 * p;
+    /* Slight genie "suck" — restrained, but clearly moving toward the bottom. */
+    const scaleX = 1 - (0.055 * p);
+    const scaleY = 1 - (0.095 * p);
+    const translateY = 13 * p;
+    const rotateX = 3.0 * p;
+    const opacity = 1 - (0.10 * p);
+    const blur = 0.42 * p;
 
     activeCard.classList.add('sf-bottom-genie');
     activeCard.style.transform =
@@ -8003,6 +8008,10 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
 
   window.addEventListener('scroll', queue, {passive:true});
   window.addEventListener('resize', queue, {passive:true});
+  if(window.visualViewport){
+    window.visualViewport.addEventListener('resize', queue, {passive:true});
+    window.visualViewport.addEventListener('scroll', queue, {passive:true});
+  }
 
   const observer = new MutationObserver(queue);
   observer.observe(document.body,{childList:true,subtree:true});
