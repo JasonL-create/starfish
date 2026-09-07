@@ -4422,6 +4422,46 @@ body:not(.sf-auth-pending) #floatingNewTask{
 }
 </style>
 
+
+<style id="v83a-mobile-circle-new-task">
+@media(max-width:760px){
+  #floatingNewTask{
+    width:58px!important;
+    height:58px!important;
+    min-width:58px!important;
+    min-height:58px!important;
+    border-radius:50%!important;
+    left:auto!important;
+    right:18px!important;
+    bottom:max(18px,calc(env(safe-area-inset-bottom) + 14px))!important;
+    transform:none!important;
+    padding:0!important;
+    border:0!important;
+    background:var(--starfish-green,#285f4b)!important;
+    box-shadow:0 8px 18px rgba(35,72,58,.24)!important;
+    font-size:0!important;
+  }
+
+  #floatingNewTask.visible,
+  #floatingNewTask:not(.visible){
+    transform:none!important;
+  }
+
+  #floatingNewTask::before{
+    content:'+'!important;
+    font-size:34px!important;
+    font-weight:300!important;
+    line-height:1!important;
+    transform:translateY(-1px)!important;
+  }
+
+  #floatingNewTask:active{
+    transform:scale(.96)!important;
+    box-shadow:0 5px 12px rgba(35,72,58,.20)!important;
+  }
+}
+</style>
+
 </head>
 <body class="sf-auth-pending">
 
