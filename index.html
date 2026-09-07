@@ -7819,16 +7819,29 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
 
 
 
-<script id="v83w-pwa-notifications-js">
+<script id="v83x-push-subscription-js">
 (function(){
   const btn = document.getElementById('sfEnableNotifications');
   const status = document.getElementById('sfNotificationStatus');
   if(!btn || !status) return;
 
+  const VAPID_PUBLIC_KEY = 'BM_BHhsQbCfYmU8TVrmZ4kQl54kuyIBrwW0cwPyITXr2Td9dcb9DXauujWq0oKgYTfu9LZTugPvsFzU3z1ucl-4';
+  const sbPush = window.supabase.createClient(
+    'https://peidlqabptowhtzqtwxt.supabase.co',
+    'sb_publishable_FEe4BC0El-Eyy68TxWWaxA_VcYJsPq1'
+  );
+
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
   const isStandalone =
     window.matchMedia('(display-mode: standalone)').matches ||
     window.navigator.standalone === true;
+
+  function urlBase64ToUint8Array(base64String){
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const rawData = atob(base64);
+    return Uint8Array.from([...rawData].map(ch => ch.charCodeAt(0)));
+  }
 
   async function getRegistration(){
     if(!('serviceWorker' in navigator)) return null;
@@ -7842,8 +7855,41 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
     }
   }
 
+  async function registerThisDevice(reg){
+    const { data: { session } } = await sbPush.auth.getSession();
+    const user = session?.user;
+    if(!user) throw new Error('Please sign in to Starfish before enabling notifications.');
+
+    let subscription = await reg.pushManager.getSubscription();
+    if(!subscription){
+      subscription = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+      });
+    }
+
+    const json = subscription.toJSON();
+    const row = {
+      user_id: user.id,
+      endpoint: subscription.endpoint,
+      p256dh: json.keys?.p256dh || '',
+      auth: json.keys?.auth || '',
+      user_agent: navigator.userAgent,
+      updated_at: new Date().toISOString()
+    };
+
+    const { error } = await sbPush
+      .from('push_subscriptions')
+      .upsert(row, { onConflict: 'user_id,endpoint' });
+
+    if(error) throw error;
+    return subscription;
+  }
+
   function refreshNotificationUI(){
-    if(!('Notification' in window) || !('serviceWorker' in navigator)){
+    btn.disabled = false;
+
+    if(!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)){
       btn.disabled = true;
       btn.textContent = 'Notifications Unavailable';
       status.textContent = 'This browser does not support Starfish notifications.';
@@ -7887,22 +7933,29 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
       if(permission !== 'granted') return;
     }
 
+    btn.disabled = true;
+    status.textContent = 'Registering this device for Starfish notifications…';
+
     try{
+      await registerThisDevice(reg);
+
       await reg.showNotification('Starfish notifications are on', {
-        body: 'This device is ready for Starfish reminders and shared-task alerts.',
+        body: 'This device is registered for Starfish reminders and shared-task alerts.',
         icon: './starfish-icon-192.png',
         badge: './starfish-icon-192.png',
         tag: 'starfish-test',
         data: { url: './' }
       });
-      status.textContent = 'Test sent. This device is ready for notifications.';
+
+      status.textContent = 'Test sent. This device is registered for notifications.';
     }catch(err){
-      console.error('Starfish test notification failed:', err);
-      status.textContent = 'Permission is enabled, but the test notification could not be displayed.';
+      console.error('Starfish push registration failed:', err);
+      status.textContent = err?.message || 'Notification permission is enabled, but this device could not be registered.';
+    }finally{
+      btn.disabled = false;
     }
   });
 
-  // Register quietly; permission itself is only requested from the button.
   getRegistration();
   refreshNotificationUI();
 })();
