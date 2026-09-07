@@ -4718,10 +4718,11 @@ body:not(.sf-auth-pending) #floatingNewTask{
 </style>
 
 
-<style id="v83m-bottom-edge-fade">
+<style id="v83n-bottom-content-fade">
 @media(max-width:760px){
-  /* No dock, no blur panel, no visible top edge.
-     Just a very shallow full-width fade into the bottom of the screen. */
+  /* This is intentionally NOT a dock/bar.
+     It is a tall white fade laid over the bottom of the task list so cards
+     gradually disappear into the page, like the reference image. */
   body:not(.sf-auth-pending)::after{
     content:""!important;
     display:block!important;
@@ -4729,14 +4730,16 @@ body:not(.sf-auth-pending) #floatingNewTask{
     left:0!important;
     right:0!important;
     bottom:0!important;
-    height:42px!important;
+    height:175px!important;
     background:linear-gradient(
       to bottom,
       rgba(255,255,255,0) 0%,
-      rgba(255,255,255,.05) 35%,
-      rgba(255,255,255,.22) 62%,
-      rgba(255,255,255,.58) 82%,
-      rgba(255,255,255,.92) 100%
+      rgba(255,255,255,.04) 15%,
+      rgba(255,255,255,.18) 32%,
+      rgba(255,255,255,.48) 52%,
+      rgba(255,255,255,.78) 70%,
+      rgba(255,255,255,.96) 88%,
+      #fff 100%
     )!important;
     border:0!important;
     box-shadow:none!important;
@@ -4746,16 +4749,49 @@ body:not(.sf-auth-pending) #floatingNewTask{
     pointer-events:none!important;
   }
 
-  /* Keep the centered mobile +, slightly lower, with a little more white ring. */
+  /* Centered mobile action button sitting in the fade. */
   #floatingNewTask,
   #floatingNewTask.visible,
   #floatingNewTask:not(.visible){
-    bottom:max(0px,calc(env(safe-area-inset-bottom) - 5px))!important;
-    background:
-      radial-gradient(circle at center,
-        var(--starfish-green,#285f4b) 0 65%,
-        #fff 66% 86%,
-        rgba(40,95,75,.20) 87% 100%)!important;
+    width:68px!important;
+    height:68px!important;
+    min-width:68px!important;
+    min-height:68px!important;
+    left:50%!important;
+    right:auto!important;
+    bottom:max(42px,calc(env(safe-area-inset-bottom) + 22px))!important;
+    transform:translateX(-50%)!important;
+    border:5px solid #fff!important;
+    border-radius:50%!important;
+    background:var(--starfish-green,#285f4b)!important;
+    box-shadow:
+      0 0 0 1.5px rgba(40,95,75,.20),
+      0 8px 18px rgba(35,72,58,.16)!important;
+    opacity:.96!important;
+    overflow:visible!important;
+    z-index:3001!important;
+  }
+
+  #floatingNewTask::after{
+    content:none!important;
+  }
+
+  #floatingNewTask::before{
+    content:'+'!important;
+    position:relative!important;
+    z-index:2!important;
+    display:block!important;
+    color:#fff!important;
+    font-family:Arial,sans-serif!important;
+    font-size:40px!important;
+    font-weight:500!important;
+    line-height:1!important;
+    transform:translateY(-2px)!important;
+  }
+
+  #floatingNewTask:active{
+    transform:translateX(-50%) scale(.96)!important;
+    opacity:1!important;
   }
 }
 </style>
