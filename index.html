@@ -7169,18 +7169,40 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
       await deleteStale('contacts','user_id',new Set(contactRows.map(r=>r.id)));
 
       const ownedStateTasks = (state.tasks||[]).filter(t=>!t.shared);
-      const taskRows = ownedStateTasks.map(t=>({
-        id:t.id, user_id:uid, title:t.title,
-        category_id:t.category ? (categoryIdByName.get(t.category)||null) : null,
-        contact_id:t.contactId||null,
-        due_date:t.dueDate||null,
-        reminder_at:t.reminderAt||null,
-        is_pinned:!!t.pinned,
-        is_complete:!!t.parentComplete,
-        completed_at:t.completedAt||t.parentCompletedAt||null,
-        is_hidden:!!t.hidden,
-        created_at:t.createdAt||new Date().toISOString()
-      }));
+
+      // Preserve the existing notification-sent timestamp unless the reminder itself changed.
+      // If a reminder is added, removed, or rescheduled, clear the sent marker so the new
+      // reminder can fire once at its new time.
+      const existingTaskReminderRes = await sb
+        .from('tasks')
+        .select('id,reminder_at,reminder_notification_sent_at')
+        .eq('user_id', uid);
+      if (existingTaskReminderRes.error) throw existingTaskReminderRes.error;
+      const existingTaskReminderById = new Map(
+        (existingTaskReminderRes.data||[]).map(r=>[r.id,r])
+      );
+
+      const taskRows = ownedStateTasks.map(t=>{
+        const oldReminder = existingTaskReminderById.get(t.id);
+        const nextReminderAt = t.reminderAt||null;
+        const oldReminderAt = oldReminder?.reminder_at||null;
+        const reminderChanged = oldReminderAt !== nextReminderAt;
+
+        return {
+          id:t.id, user_id:uid, title:t.title,
+          category_id:t.category ? (categoryIdByName.get(t.category)||null) : null,
+          contact_id:t.contactId||null,
+          due_date:t.dueDate||null,
+          reminder_at:nextReminderAt,
+          reminder_notification_sent_at:
+            reminderChanged ? null : (oldReminder?.reminder_notification_sent_at||null),
+          is_pinned:!!t.pinned,
+          is_complete:!!t.parentComplete,
+          completed_at:t.completedAt||t.parentCompletedAt||null,
+          is_hidden:!!t.hidden,
+          created_at:t.createdAt||new Date().toISOString()
+        };
+      });
       if (taskRows.length) {
         const up = await sb.from('tasks').upsert(taskRows);
         if (up.error) throw up.error;
