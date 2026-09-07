@@ -4718,38 +4718,15 @@ body:not(.sf-auth-pending) #floatingNewTask{
 </style>
 
 
-<style id="v83n-bottom-content-fade">
+<style id="v83u-clean-normal-scroll">
 @media(max-width:760px){
-  /* This is intentionally NOT a dock/bar.
-     It is a tall white fade laid over the bottom of the task list so cards
-     gradually disappear into the page, like the reference image. */
+  /* Normal scrolling: no fade, blur, dock, mask, or card animation. */
   body:not(.sf-auth-pending)::after{
-    content:""!important;
-    display:block!important;
-    position:fixed!important;
-    left:0!important;
-    right:0!important;
-    bottom:0!important;
-    height:175px!important;
-    background:linear-gradient(
-      to bottom,
-      rgba(255,255,255,0) 0%,
-      rgba(255,255,255,.04) 15%,
-      rgba(255,255,255,.18) 32%,
-      rgba(255,255,255,.48) 52%,
-      rgba(255,255,255,.78) 70%,
-      rgba(255,255,255,.96) 88%,
-      #fff 100%
-    )!important;
-    border:0!important;
-    box-shadow:none!important;
-    -webkit-backdrop-filter:none!important;
-    backdrop-filter:none!important;
-    z-index:2997!important;
-    pointer-events:none!important;
+    display:none!important;
+    content:none!important;
   }
 
-  /* Centered mobile action button sitting in the fade. */
+  /* Preserve the accepted centered + button design. */
   #floatingNewTask,
   #floatingNewTask.visible,
   #floatingNewTask:not(.visible){
@@ -4759,7 +4736,7 @@ body:not(.sf-auth-pending) #floatingNewTask{
     min-height:68px!important;
     left:50%!important;
     right:auto!important;
-    bottom:max(42px,calc(env(safe-area-inset-bottom) + 22px))!important;
+    bottom:max(10px,calc(env(safe-area-inset-bottom) + 2px))!important;
     transform:translateX(-50%)!important;
     border:5px solid #fff!important;
     border-radius:50%!important;
@@ -4772,9 +4749,7 @@ body:not(.sf-auth-pending) #floatingNewTask{
     z-index:3001!important;
   }
 
-  #floatingNewTask::after{
-    content:none!important;
-  }
+  #floatingNewTask::after{content:none!important;}
 
   #floatingNewTask::before{
     content:'+'!important;
@@ -4792,79 +4767,6 @@ body:not(.sf-auth-pending) #floatingNewTask{
   #floatingNewTask:active{
     transform:translateX(-50%) scale(.96)!important;
     opacity:1!important;
-  }
-}
-</style>
-
-
-<style id="v83o-safari-bottom-continuous-fade">
-@media(max-width:760px){
-  /* Safari can reveal page content underneath its floating browser chrome.
-     Extend the fade BELOW the visual viewport so it never becomes clear again
-     before the browser controls. */
-  body:not(.sf-auth-pending)::after{
-    display:block!important;
-    content:""!important;
-    position:fixed!important;
-    left:0!important;
-    right:0!important;
-    bottom:-96px!important;
-    height:285px!important;
-    background:linear-gradient(
-      to bottom,
-      rgba(255,255,255,0) 0%,
-      rgba(255,255,255,.05) 15%,
-      rgba(255,255,255,.18) 30%,
-      rgba(255,255,255,.46) 46%,
-      rgba(255,255,255,.74) 60%,
-      rgba(255,255,255,.94) 72%,
-      #fff 82%,
-      #fff 100%
-    )!important;
-    border:0!important;
-    box-shadow:none!important;
-    -webkit-backdrop-filter:none!important;
-    backdrop-filter:none!important;
-    z-index:2997!important;
-    pointer-events:none!important;
-  }
-
-  /* Keep the exact V83n + button design; only lower its position. */
-  #floatingNewTask,
-  #floatingNewTask.visible,
-  #floatingNewTask:not(.visible){
-    bottom:max(10px,calc(env(safe-area-inset-bottom) + 2px))!important;
-  }
-
-  #floatingNewTask:active{
-    transform:translateX(-50%) scale(.96)!important;
-  }
-}
-</style>
-
-
-
-<style id="v83t-last-card-fade-only">
-@media(max-width:760px){
-  /* No movement, scaling, blur, or transform. Only the bottom of the
-     lowest visible card softly fades as it reaches the bottom of the screen. */
-  .task-card.sf-bottom-fade{
-    -webkit-mask-image:linear-gradient(
-      to bottom,
-      #000 0%,
-      #000 var(--sf-fade-start,78%),
-      rgba(0,0,0,.72) calc(var(--sf-fade-start,78%) + 8%),
-      rgba(0,0,0,.34) calc(var(--sf-fade-start,78%) + 16%),
-      transparent 100%
-    )!important;
-    mask-image:linear-gradient(
-      to bottom,
-      #000 0%,
-      #000 var(--sf-fade-start,78%),
-      rgba(0,0,0,.72) calc(var(--sf-fade-start,78%) + 8%),
-      rgba(0,0,0,.34) calc(var(--sf-fade-start,78%) + 16%),
-      transparent 100%
-    )!important;
   }
 }
 </style>
@@ -7873,93 +7775,6 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
 })();
 </script>
 
-
-
-
-
-<script id="v83t-last-card-fade-only-js">
-(function(){
-  function clamp(n,min,max){ return Math.max(min,Math.min(max,n)); }
-
-  function updateBottomFade(){
-    if(window.innerWidth > 760){
-      document.querySelectorAll('.task-card.sf-bottom-fade').forEach(card=>{
-        card.classList.remove('sf-bottom-fade');
-        card.style.removeProperty('--sf-fade-start');
-      });
-      return;
-    }
-
-    const cards = Array.from(document.querySelectorAll('.task-card'));
-    if(!cards.length) return;
-
-    const vh = window.visualViewport
-      ? window.visualViewport.height
-      : (window.innerHeight || document.documentElement.clientHeight);
-
-    let lowest = null;
-    let lowestTop = -Infinity;
-
-    cards.forEach(card=>{
-      const r = card.getBoundingClientRect();
-      const visible = r.bottom > 0 && r.top < vh;
-      if(visible && r.top > lowestTop){
-        lowestTop = r.top;
-        lowest = {card,r};
-      }
-    });
-
-    cards.forEach(card=>{
-      if(!lowest || card !== lowest.card){
-        card.classList.remove('sf-bottom-fade');
-        card.style.removeProperty('--sf-fade-start');
-      }
-    });
-
-    if(!lowest) return;
-
-    const {card,r} = lowest;
-
-    // Begin only when the card is approaching the lower part of the screen.
-    const zoneStart = vh - 150;
-    const p = clamp((r.bottom - zoneStart) / 150, 0, 1);
-
-    if(p <= 0){
-      card.classList.remove('sf-bottom-fade');
-      card.style.removeProperty('--sf-fade-start');
-      return;
-    }
-
-    // At first only the very bottom edge fades; as the card gets lower,
-    // the fade creeps upward slightly. The card itself never moves.
-    const fadeStart = 94 - (p * 24); // 94% -> 70%
-    card.style.setProperty('--sf-fade-start', fadeStart.toFixed(1) + '%');
-    card.classList.add('sf-bottom-fade');
-  }
-
-  let ticking=false;
-  function queue(){
-    if(ticking) return;
-    ticking=true;
-    requestAnimationFrame(()=>{
-      ticking=false;
-      updateBottomFade();
-    });
-  }
-
-  window.addEventListener('scroll',queue,{passive:true});
-  window.addEventListener('resize',queue,{passive:true});
-  if(window.visualViewport){
-    window.visualViewport.addEventListener('scroll',queue,{passive:true});
-    window.visualViewport.addEventListener('resize',queue,{passive:true});
-  }
-
-  const observer=new MutationObserver(queue);
-  observer.observe(document.body,{childList:true,subtree:true});
-
-  setTimeout(updateBottomFade,80);
-})();
-</script>
 
 </body>
 </html>
