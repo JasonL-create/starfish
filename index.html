@@ -4843,25 +4843,28 @@ body:not(.sf-auth-pending) #floatingNewTask{
 </style>
 
 
-<style id="v83p-no-fade-last-card-genie">
+
+<style id="v83t-last-card-fade-only">
 @media(max-width:760px){
-  /* Remove the bottom fade entirely. */
-  body:not(.sf-auth-pending)::after{
-    display:none!important;
-    content:none!important;
-  }
-
-  /* Preserve the current + button design and lower placement exactly. */
-  #floatingNewTask,
-  #floatingNewTask.visible,
-  #floatingNewTask:not(.visible){
-    bottom:max(10px,calc(env(safe-area-inset-bottom) + 2px))!important;
-  }
-
-  /* Visual-only preparation for the last visible card. */
-  .task-card.sf-bottom-genie{
-    transform-origin:50% 100%!important;
-    will-change:transform, opacity, filter;
+  /* No movement, scaling, blur, or transform. Only the bottom of the
+     lowest visible card softly fades as it reaches the bottom of the screen. */
+  .task-card.sf-bottom-fade{
+    -webkit-mask-image:linear-gradient(
+      to bottom,
+      #000 0%,
+      #000 var(--sf-fade-start,78%),
+      rgba(0,0,0,.72) calc(var(--sf-fade-start,78%) + 8%),
+      rgba(0,0,0,.34) calc(var(--sf-fade-start,78%) + 16%),
+      transparent 100%
+    )!important;
+    mask-image:linear-gradient(
+      to bottom,
+      #000 0%,
+      #000 var(--sf-fade-start,78%),
+      rgba(0,0,0,.72) calc(var(--sf-fade-start,78%) + 8%),
+      rgba(0,0,0,.34) calc(var(--sf-fade-start,78%) + 16%),
+      transparent 100%
+    )!important;
   }
 }
 </style>
@@ -7873,60 +7876,17 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
 
 
 
-<script id="v83s-stable-last-card-genie-js">
+
+<script id="v83t-last-card-fade-only-js">
 (function(){
   function clamp(n,min,max){ return Math.max(min,Math.min(max,n)); }
 
-  let activeCard = null;
-
-  function clearGenie(card){
-    if(!card) return;
-    card.classList.remove('sf-bottom-genie');
-    card.style.removeProperty('transform');
-    card.style.removeProperty('opacity');
-    card.style.removeProperty('filter');
-    delete card.dataset.genieProgress;
-  }
-
-  /* Measure a card WITHOUT its genie transform.
-     This prevents the animation from changing its own trigger geometry. */
-  function rawRect(card){
-    const oldTransform = card.style.transform;
-    const oldOpacity = card.style.opacity;
-    const oldFilter = card.style.filter;
-
-    card.style.transform = 'none';
-    card.style.opacity = '1';
-    card.style.filter = 'none';
-
-    const r = card.getBoundingClientRect();
-
-    card.style.transform = oldTransform;
-    card.style.opacity = oldOpacity;
-    card.style.filter = oldFilter;
-
-    return r;
-  }
-
-  function lowestVisibleCard(cards, vh){
-    let candidate = null;
-    let bestTop = -Infinity;
-
-    cards.forEach(card=>{
-      const r = rawRect(card);
-      if(r.bottom > 0 && r.top < vh && r.top > bestTop){
-        bestTop = r.top;
-        candidate = card;
-      }
-    });
-
-    return candidate;
-  }
-
-  function updateBottomGenie(){
+  function updateBottomFade(){
     if(window.innerWidth > 760){
-      clearGenie(activeCard);
-      activeCard = null;
+      document.querySelectorAll('.task-card.sf-bottom-fade').forEach(card=>{
+        card.classList.remove('sf-bottom-fade');
+        card.style.removeProperty('--sf-fade-start');
+      });
       return;
     }
 
@@ -7937,89 +7897,69 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
       ? window.visualViewport.height
       : (window.innerHeight || document.documentElement.clientHeight);
 
-    const triggerStart = vh * 0.78;
-    const triggerEnd = vh + 105;
-
-    if(activeCard && !document.body.contains(activeCard)){
-      activeCard = null;
-    }
-
-    if(activeCard){
-      const r = rawRect(activeCard);
-
-      /* Hold the effect until the card is actually well below Safari's
-         visible area. It will not hand off early or snap back. */
-      if(r.top > vh + 120 || r.bottom < -80){
-        clearGenie(activeCard);
-        activeCard = null;
-      }
-    }
-
-    if(!activeCard){
-      const candidate = lowestVisibleCard(cards, vh);
-      if(candidate){
-        const r = rawRect(candidate);
-        const initial = clamp((r.top - triggerStart) / (triggerEnd - triggerStart), 0, 1);
-        if(initial > 0){
-          activeCard = candidate;
-          activeCard.dataset.genieProgress = String(initial);
-        }
-      }
-    }
+    let lowest = null;
+    let lowestTop = -Infinity;
 
     cards.forEach(card=>{
-      if(card !== activeCard) clearGenie(card);
+      const r = card.getBoundingClientRect();
+      const visible = r.bottom > 0 && r.top < vh;
+      if(visible && r.top > lowestTop){
+        lowestTop = r.top;
+        lowest = {card,r};
+      }
     });
 
-    if(!activeCard) return;
+    cards.forEach(card=>{
+      if(!lowest || card !== lowest.card){
+        card.classList.remove('sf-bottom-fade');
+        card.style.removeProperty('--sf-fade-start');
+      }
+    });
 
-    const r = rawRect(activeCard);
-    const rawP = clamp((r.top - triggerStart) / (triggerEnd - triggerStart), 0, 1);
-    const prevP = parseFloat(activeCard.dataset.genieProgress || '0');
+    if(!lowest) return;
 
-    /* Once shrinking starts, never allow that same card to expand again. */
-    const p = Math.max(prevP, rawP);
-    activeCard.dataset.genieProgress = String(p);
+    const {card,r} = lowest;
 
-    /* Slight genie "suck" — restrained, but clearly moving toward the bottom. */
-    const scaleX = 1 - (0.055 * p);
-    const scaleY = 1 - (0.095 * p);
-    const translateY = 13 * p;
-    const rotateX = 3.0 * p;
-    const opacity = 1 - (0.10 * p);
-    const blur = 0.42 * p;
+    // Begin only when the card is approaching the lower part of the screen.
+    const zoneStart = vh - 150;
+    const p = clamp((r.bottom - zoneStart) / 150, 0, 1);
 
-    activeCard.classList.add('sf-bottom-genie');
-    activeCard.style.transform =
-      `perspective(900px) translateY(${translateY.toFixed(2)}px) rotateX(${rotateX.toFixed(2)}deg) scaleX(${scaleX.toFixed(4)}) scaleY(${scaleY.toFixed(4)})`;
-    activeCard.style.opacity = opacity.toFixed(3);
-    activeCard.style.filter = `blur(${blur.toFixed(2)}px)`;
+    if(p <= 0){
+      card.classList.remove('sf-bottom-fade');
+      card.style.removeProperty('--sf-fade-start');
+      return;
+    }
+
+    // At first only the very bottom edge fades; as the card gets lower,
+    // the fade creeps upward slightly. The card itself never moves.
+    const fadeStart = 94 - (p * 24); // 94% -> 70%
+    card.style.setProperty('--sf-fade-start', fadeStart.toFixed(1) + '%');
+    card.classList.add('sf-bottom-fade');
   }
 
-  let ticking = false;
+  let ticking=false;
   function queue(){
     if(ticking) return;
-    ticking = true;
+    ticking=true;
     requestAnimationFrame(()=>{
-      ticking = false;
-      updateBottomGenie();
+      ticking=false;
+      updateBottomFade();
     });
   }
 
-  window.addEventListener('scroll', queue, {passive:true});
-  window.addEventListener('resize', queue, {passive:true});
+  window.addEventListener('scroll',queue,{passive:true});
+  window.addEventListener('resize',queue,{passive:true});
   if(window.visualViewport){
-    window.visualViewport.addEventListener('resize', queue, {passive:true});
-    window.visualViewport.addEventListener('scroll', queue, {passive:true});
+    window.visualViewport.addEventListener('scroll',queue,{passive:true});
+    window.visualViewport.addEventListener('resize',queue,{passive:true});
   }
 
-  const observer = new MutationObserver(queue);
+  const observer=new MutationObserver(queue);
   observer.observe(document.body,{childList:true,subtree:true});
 
-  setTimeout(updateBottomGenie, 80);
+  setTimeout(updateBottomFade,80);
 })();
 </script>
-
 
 </body>
 </html>
