@@ -4771,6 +4771,39 @@ body:not(.sf-auth-pending) #floatingNewTask{
 }
 </style>
 
+
+<style id="v83za-mobile-blurred-footer-test">
+@media(max-width:760px){
+  /* Standalone-PWA footer experiment: a real app footer can now sit at the
+     bottom without competing with Safari's browser toolbar. */
+  body:not(.sf-auth-pending)::after{
+    content:''!important;
+    display:block!important;
+    position:fixed!important;
+    left:0!important;
+    right:0!important;
+    bottom:0!important;
+    height:calc(56px + env(safe-area-inset-bottom))!important;
+    background:rgba(255,255,255,.72)!important;
+    -webkit-backdrop-filter:blur(18px) saturate(125%)!important;
+    backdrop-filter:blur(18px) saturate(125%)!important;
+    border-top:1px solid rgba(220,226,222,.72)!important;
+    box-shadow:0 -3px 12px rgba(35,72,58,.045)!important;
+    pointer-events:none!important;
+    z-index:2999!important;
+  }
+
+  /* Keep the approved + button exactly the same; only raise it so its center
+     sits on the footer's top edge (half in / half out). */
+  #floatingNewTask,
+  #floatingNewTask.visible,
+  #floatingNewTask:not(.visible){
+    bottom:max(22px,calc(env(safe-area-inset-bottom) + 22px))!important;
+    z-index:3001!important;
+  }
+}
+</style>
+
 <style id="v83v-task-title-weight">
 .task-title{font-weight:550!important;}
 </style>
