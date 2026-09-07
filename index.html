@@ -4796,6 +4796,52 @@ body:not(.sf-auth-pending) #floatingNewTask{
 }
 </style>
 
+
+<style id="v83o-safari-bottom-continuous-fade">
+@media(max-width:760px){
+  /* Safari can reveal page content underneath its floating browser chrome.
+     Extend the fade BELOW the visual viewport so it never becomes clear again
+     before the browser controls. */
+  body:not(.sf-auth-pending)::after{
+    display:block!important;
+    content:""!important;
+    position:fixed!important;
+    left:0!important;
+    right:0!important;
+    bottom:-96px!important;
+    height:285px!important;
+    background:linear-gradient(
+      to bottom,
+      rgba(255,255,255,0) 0%,
+      rgba(255,255,255,.05) 15%,
+      rgba(255,255,255,.18) 30%,
+      rgba(255,255,255,.46) 46%,
+      rgba(255,255,255,.74) 60%,
+      rgba(255,255,255,.94) 72%,
+      #fff 82%,
+      #fff 100%
+    )!important;
+    border:0!important;
+    box-shadow:none!important;
+    -webkit-backdrop-filter:none!important;
+    backdrop-filter:none!important;
+    z-index:2997!important;
+    pointer-events:none!important;
+  }
+
+  /* Keep the exact V83n + button design; only lower its position. */
+  #floatingNewTask,
+  #floatingNewTask.visible,
+  #floatingNewTask:not(.visible){
+    bottom:max(10px,calc(env(safe-area-inset-bottom) + 2px))!important;
+  }
+
+  #floatingNewTask:active{
+    transform:translateX(-50%) scale(.96)!important;
+  }
+}
+</style>
+
 </head>
 <body class="sf-auth-pending">
 
