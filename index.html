@@ -4670,6 +4670,53 @@ body:not(.sf-auth-pending) #floatingNewTask{
 }
 </style>
 
+
+<style id="v83i-frosted-bottom-dock">
+@media(max-width:760px){
+  /* Lower, softer frosted dock so more task content remains visible. */
+  body:not(.sf-auth-pending)::after{
+    height:max(18px,calc(env(safe-area-inset-bottom) + 8px))!important;
+    background:rgba(255,255,255,.58)!important;
+    -webkit-backdrop-filter:blur(16px) saturate(125%)!important;
+    backdrop-filter:blur(16px) saturate(125%)!important;
+    border-top:1px solid rgba(220,226,222,.72)!important;
+    box-shadow:0 -3px 12px rgba(35,72,58,.045)!important;
+  }
+
+  #floatingNewTask,
+  #floatingNewTask.visible,
+  #floatingNewTask:not(.visible){
+    bottom:max(2px,calc(env(safe-area-inset-bottom) - 3px))!important;
+  }
+
+  #floatingNewTask:active{
+    transform:translateX(-50%) scale(.96)!important;
+  }
+}
+</style>
+
+
+<style id="v83j-mobile-status-icons-tighter">
+@media(max-width:760px){
+  /* Bell/pin are status indicators, so cluster them nearer the menu button.
+     The menu keeps its full tap target. */
+  .task-status-actions{
+    gap:1px!important;
+  }
+  .card-reminder-status{
+    width:25px!important;
+  }
+  .task-status-actions .pin-status-icon{
+    width:24px!important;
+  }
+
+  /* Reclaim title space opened by the tighter status cluster. */
+  .task-title{
+    padding-right:101px!important;
+  }
+}
+</style>
+
 </head>
 <body class="sf-auth-pending">
 
