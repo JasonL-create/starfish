@@ -4756,6 +4756,61 @@ body:not(.sf-auth-pending) #floatingNewTask{
 }
 </style>
 
+
+<style id="v83l-localized-bottom-frost">
+@media(max-width:760px){
+  /* Remove the full-width frosted strip completely. */
+  body:not(.sf-auth-pending)::after{
+    display:none!important;
+    content:none!important;
+  }
+
+  /* Keep the anchored +, but give it only a localized frosted halo.
+     This creates depth without putting a translucent bar across the screen. */
+  #floatingNewTask,
+  #floatingNewTask.visible,
+  #floatingNewTask:not(.visible){
+    overflow:visible!important;
+  }
+
+  #floatingNewTask::after{
+    content:''!important;
+    position:absolute!important;
+    z-index:-1!important;
+    left:50%!important;
+    top:50%!important;
+    width:112px!important;
+    height:88px!important;
+    transform:translate(-50%,-42%)!important;
+    border-radius:50%!important;
+    background:radial-gradient(
+      ellipse at center,
+      rgba(255,255,255,.72) 0%,
+      rgba(255,255,255,.42) 44%,
+      rgba(255,255,255,.14) 68%,
+      rgba(255,255,255,0) 100%
+    )!important;
+    -webkit-backdrop-filter:blur(9px) saturate(120%)!important;
+    backdrop-filter:blur(9px) saturate(120%)!important;
+    -webkit-mask-image:radial-gradient(
+      ellipse at center,
+      #000 0%,
+      #000 54%,
+      rgba(0,0,0,.55) 72%,
+      transparent 100%
+    )!important;
+    mask-image:radial-gradient(
+      ellipse at center,
+      #000 0%,
+      #000 54%,
+      rgba(0,0,0,.55) 72%,
+      transparent 100%
+    )!important;
+    pointer-events:none!important;
+  }
+}
+</style>
+
 </head>
 <body class="sf-auth-pending">
 
