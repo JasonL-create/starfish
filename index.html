@@ -4771,6 +4771,41 @@ body:not(.sf-auth-pending) #floatingNewTask{
 }
 </style>
 
+<style id="v83v-task-title-weight">
+.task-title{font-weight:550!important;}
+</style>
+
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#285f4b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Starfish">
+<link rel="apple-touch-icon" href="./starfish-icon-192.png">
+
+
+<style id="v83w-pwa-notifications">
+.sf-profile-notification-block{
+  margin:10px 0 12px;
+  padding-top:10px;
+  border-top:1px solid var(--line,#e8e9e5);
+}
+.sf-profile-notification-btn{
+  width:100%;
+  min-height:38px;
+  border:1px solid #285f4b;
+  border-radius:9px;
+  background:#fff;
+  color:#285f4b;
+  font-weight:650;
+}
+.sf-profile-notification-status{
+  margin-top:7px;
+  font-size:11.5px;
+  line-height:1.35;
+  color:var(--muted,#7a7e78);
+}
+</style>
+
 </head>
 <body class="sf-auth-pending">
 
@@ -4822,6 +4857,13 @@ body:not(.sf-auth-pending) #floatingNewTask{
     <div class="sf-profile-status">
       <span id="sfProfileCloudDot" class="sf-cloud-dot"></span>
       <span id="sfProfileCloudStatus">Saved</span>
+    </div>
+
+    <div class="sf-profile-notification-block">
+      <button id="sfEnableNotifications" class="sf-profile-notification-btn" type="button">
+        Enable Notifications
+      </button>
+      <div id="sfNotificationStatus" class="sf-profile-notification-status"></div>
     </div>
     <button id="sfProfileSignOut" class="sf-profile-signout" type="button">Sign out</button>
   </div>
@@ -7775,6 +7817,96 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
 })();
 </script>
 
+
+
+<script id="v83w-pwa-notifications-js">
+(function(){
+  const btn = document.getElementById('sfEnableNotifications');
+  const status = document.getElementById('sfNotificationStatus');
+  if(!btn || !status) return;
+
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone =
+    window.matchMedia('(display-mode: standalone)').matches ||
+    window.navigator.standalone === true;
+
+  async function getRegistration(){
+    if(!('serviceWorker' in navigator)) return null;
+    try{
+      const reg = await navigator.serviceWorker.register('./service-worker.js');
+      await navigator.serviceWorker.ready;
+      return reg;
+    }catch(err){
+      console.error('Starfish service worker registration failed:', err);
+      return null;
+    }
+  }
+
+  function refreshNotificationUI(){
+    if(!('Notification' in window) || !('serviceWorker' in navigator)){
+      btn.disabled = true;
+      btn.textContent = 'Notifications Unavailable';
+      status.textContent = 'This browser does not support Starfish notifications.';
+      return;
+    }
+
+    if(isIOS && !isStandalone){
+      btn.textContent = 'Enable Notifications';
+      status.textContent = 'On iPhone, add Starfish to your Home Screen first, then open it from the Starfish icon.';
+      return;
+    }
+
+    if(Notification.permission === 'granted'){
+      btn.textContent = 'Send Test Notification';
+      status.textContent = 'Notifications are enabled on this device.';
+    }else if(Notification.permission === 'denied'){
+      btn.disabled = true;
+      btn.textContent = 'Notifications Blocked';
+      status.textContent = 'Notifications are blocked for Starfish in this device’s settings.';
+    }else{
+      btn.textContent = 'Enable Notifications';
+      status.textContent = 'Get reminders and shared-task alerts on this device.';
+    }
+  }
+
+  btn.addEventListener('click', async ()=>{
+    if(isIOS && !isStandalone){
+      status.textContent = 'Use Safari’s Share button → Add to Home Screen. Then open Starfish from its Home Screen icon and enable notifications here.';
+      return;
+    }
+
+    const reg = await getRegistration();
+    if(!reg){
+      status.textContent = 'Starfish could not start notification support. Make sure this site is being served over HTTPS.';
+      return;
+    }
+
+    if(Notification.permission !== 'granted'){
+      const permission = await Notification.requestPermission();
+      refreshNotificationUI();
+      if(permission !== 'granted') return;
+    }
+
+    try{
+      await reg.showNotification('Starfish notifications are on', {
+        body: 'This device is ready for Starfish reminders and shared-task alerts.',
+        icon: './starfish-icon-192.png',
+        badge: './starfish-icon-192.png',
+        tag: 'starfish-test',
+        data: { url: './' }
+      });
+      status.textContent = 'Test sent. This device is ready for notifications.';
+    }catch(err){
+      console.error('Starfish test notification failed:', err);
+      status.textContent = 'Permission is enabled, but the test notification could not be displayed.';
+    }
+  });
+
+  // Register quietly; permission itself is only requested from the button.
+  getRegistration();
+  refreshNotificationUI();
+})();
+</script>
 
 </body>
 </html>
