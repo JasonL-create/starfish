@@ -4718,95 +4718,44 @@ body:not(.sf-auth-pending) #floatingNewTask{
 </style>
 
 
-<style id="v83k-bottom-fade-and-plus-ring">
+<style id="v83m-bottom-edge-fade">
 @media(max-width:760px){
-  /* Remove the visible horizontal dock/bar. Instead, use a borderless
-     bottom-edge fade so cards visually soften into the bottom of the screen. */
+  /* No dock, no blur panel, no visible top edge.
+     Just a very shallow full-width fade into the bottom of the screen. */
   body:not(.sf-auth-pending)::after{
+    content:""!important;
+    display:block!important;
+    position:fixed!important;
     left:0!important;
     right:0!important;
     bottom:0!important;
-    height:58px!important;
+    height:42px!important;
     background:linear-gradient(
       to bottom,
       rgba(255,255,255,0) 0%,
-      rgba(255,255,255,.16) 28%,
-      rgba(255,255,255,.58) 68%,
-      rgba(255,255,255,.88) 100%
+      rgba(255,255,255,.05) 35%,
+      rgba(255,255,255,.22) 62%,
+      rgba(255,255,255,.58) 82%,
+      rgba(255,255,255,.92) 100%
     )!important;
-    -webkit-backdrop-filter:blur(5px)!important;
-    backdrop-filter:blur(5px)!important;
-    -webkit-mask-image:linear-gradient(to bottom,transparent 0%,#000 58%,#000 100%)!important;
-    mask-image:linear-gradient(to bottom,transparent 0%,#000 58%,#000 100%)!important;
     border:0!important;
     box-shadow:none!important;
+    -webkit-backdrop-filter:none!important;
+    backdrop-filter:none!important;
+    z-index:2997!important;
     pointer-events:none!important;
   }
 
-  /* Slightly thicker white ring around the anchored mobile +. */
+  /* Keep the centered mobile +, slightly lower, with a little more white ring. */
   #floatingNewTask,
   #floatingNewTask.visible,
   #floatingNewTask:not(.visible){
+    bottom:max(0px,calc(env(safe-area-inset-bottom) - 5px))!important;
     background:
       radial-gradient(circle at center,
-        var(--starfish-green,#285f4b) 0 66%,
-        #fff 67% 84%,
-        rgba(40,95,75,.22) 85% 100%)!important;
-  }
-}
-</style>
-
-
-<style id="v83l-localized-bottom-frost">
-@media(max-width:760px){
-  /* Remove the full-width frosted strip completely. */
-  body:not(.sf-auth-pending)::after{
-    display:none!important;
-    content:none!important;
-  }
-
-  /* Keep the anchored +, but give it only a localized frosted halo.
-     This creates depth without putting a translucent bar across the screen. */
-  #floatingNewTask,
-  #floatingNewTask.visible,
-  #floatingNewTask:not(.visible){
-    overflow:visible!important;
-  }
-
-  #floatingNewTask::after{
-    content:''!important;
-    position:absolute!important;
-    z-index:-1!important;
-    left:50%!important;
-    top:50%!important;
-    width:112px!important;
-    height:88px!important;
-    transform:translate(-50%,-42%)!important;
-    border-radius:50%!important;
-    background:radial-gradient(
-      ellipse at center,
-      rgba(255,255,255,.72) 0%,
-      rgba(255,255,255,.42) 44%,
-      rgba(255,255,255,.14) 68%,
-      rgba(255,255,255,0) 100%
-    )!important;
-    -webkit-backdrop-filter:blur(9px) saturate(120%)!important;
-    backdrop-filter:blur(9px) saturate(120%)!important;
-    -webkit-mask-image:radial-gradient(
-      ellipse at center,
-      #000 0%,
-      #000 54%,
-      rgba(0,0,0,.55) 72%,
-      transparent 100%
-    )!important;
-    mask-image:radial-gradient(
-      ellipse at center,
-      #000 0%,
-      #000 54%,
-      rgba(0,0,0,.55) 72%,
-      transparent 100%
-    )!important;
-    pointer-events:none!important;
+        var(--starfish-green,#285f4b) 0 65%,
+        #fff 66% 86%,
+        rgba(40,95,75,.20) 87% 100%)!important;
   }
 }
 </style>
