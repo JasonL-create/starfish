@@ -4842,6 +4842,30 @@ body:not(.sf-auth-pending) #floatingNewTask{
 }
 </style>
 
+
+<style id="v83p-no-fade-last-card-genie">
+@media(max-width:760px){
+  /* Remove the bottom fade entirely. */
+  body:not(.sf-auth-pending)::after{
+    display:none!important;
+    content:none!important;
+  }
+
+  /* Preserve the current + button design and lower placement exactly. */
+  #floatingNewTask,
+  #floatingNewTask.visible,
+  #floatingNewTask:not(.visible){
+    bottom:max(10px,calc(env(safe-area-inset-bottom) + 2px))!important;
+  }
+
+  /* Visual-only preparation for the last visible card. */
+  .task-card.sf-bottom-genie{
+    transform-origin:50% 100%!important;
+    will-change:transform, opacity, filter;
+  }
+}
+</style>
+
 </head>
 <body class="sf-auth-pending">
 
@@ -7846,6 +7870,88 @@ document.addEventListener('click',e=>{if(e.target.closest('.pin-btn,#detailPin,[
 })();
 </script>
 
+
+
+<script id="v83p-last-card-genie-js">
+(function(){
+  function clamp(n,min,max){ return Math.max(min,Math.min(max,n)); }
+
+  function updateBottomGenie(){
+    if(window.innerWidth > 760) return;
+
+    const cards = Array.from(document.querySelectorAll('.task-card'));
+    if(!cards.length) return;
+
+    const vh = window.innerHeight || document.documentElement.clientHeight;
+    const triggerStart = vh * 0.78;
+    const triggerEnd   = vh * 1.02;
+
+    let active = null;
+    let bestTop = -Infinity;
+
+    // Only the lowest card that is still meaningfully visible gets the effect.
+    cards.forEach(card=>{
+      const r = card.getBoundingClientRect();
+      card.classList.remove('sf-bottom-genie');
+      card.style.removeProperty('transform');
+      card.style.removeProperty('opacity');
+      card.style.removeProperty('filter');
+
+      const visible = r.bottom > 0 && r.top < vh;
+      if(visible && r.top > bestTop){
+        bestTop = r.top;
+        active = {card, r};
+      }
+    });
+
+    if(!active) return;
+
+    const {card, r} = active;
+    const p = clamp((r.top - triggerStart) / (triggerEnd - triggerStart), 0, 1);
+
+    if(p <= 0) return;
+
+    /*
+      Very subtle "start of a genie" effect:
+      - narrows slightly toward the bottom
+      - compresses vertically a touch
+      - shifts downward a few pixels
+      - softens just enough to imply it is being pulled away
+      No dramatic disappearance or wobble.
+    */
+    const scaleX = 1 - (0.045 * p);
+    const scaleY = 1 - (0.075 * p);
+    const translateY = 8 * p;
+    const rotateX = 2.5 * p;
+    const opacity = 1 - (0.08 * p);
+    const blur = 0.35 * p;
+
+    card.classList.add('sf-bottom-genie');
+    card.style.transform =
+      `perspective(900px) translateY(${translateY.toFixed(2)}px) rotateX(${rotateX.toFixed(2)}deg) scaleX(${scaleX.toFixed(4)}) scaleY(${scaleY.toFixed(4)})`;
+    card.style.opacity = opacity.toFixed(3);
+    card.style.filter = `blur(${blur.toFixed(2)}px)`;
+  }
+
+  let ticking = false;
+  function queue(){
+    if(ticking) return;
+    ticking = true;
+    requestAnimationFrame(()=>{
+      ticking = false;
+      updateBottomGenie();
+    });
+  }
+
+  window.addEventListener('scroll', queue, {passive:true});
+  window.addEventListener('resize', queue, {passive:true});
+
+  const observer = new MutationObserver(queue);
+  observer.observe(document.body,{childList:true,subtree:true});
+
+  setTimeout(updateBottomGenie, 80);
+})();
+</script>
 
 </body>
 </html>
