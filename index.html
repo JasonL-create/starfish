@@ -5102,6 +5102,107 @@ body:not(.sf-auth-pending) #floatingNewTask{
   }
 }
 </style>
+<style id="v83zh-unified-mobile-toolbar">
+@media(max-width:760px){
+  .sf-mobile-command-bar{
+    padding-left:28px!important;
+    padding-right:28px!important;
+  }
+
+  /* Secondary actions share one visual weight; + remains primary, only ~20% larger. */
+  .sf-mobile-task-view{
+    width:70px!important;
+    min-width:70px!important;
+    height:50px!important;
+    margin-left:4px!important;
+    border-radius:18px!important;
+    background:rgba(232,241,237,.72)!important;
+    border:1px solid rgba(40,95,75,.08)!important;
+    box-shadow:0 2px 8px rgba(35,72,58,.055)!important;
+    color:var(--starfish-green,#285f4b)!important;
+  }
+  .sf-mobile-task-view-icon{
+    width:31px!important;
+    height:31px!important;
+    transform:translateX(-8px)!important;
+  }
+  .sf-mobile-task-view-badge{
+    top:50%!important;
+    right:8px!important;
+    transform:translateY(-50%)!important;
+    min-width:25px!important;
+    height:25px!important;
+    padding:0 6px!important;
+    border:0!important;
+    font-size:12px!important;
+    box-shadow:0 2px 5px rgba(35,72,58,.12)!important;
+  }
+
+  .sf-mobile-command-actions{
+    gap:10px!important;
+    margin-right:2px!important;
+  }
+  .sf-mobile-command-icon{
+    width:50px!important;
+    height:50px!important;
+    padding:10px!important;
+    border:1px solid rgba(40,95,75,.08)!important;
+    border-radius:50%!important;
+    background:rgba(232,241,237,.72)!important;
+    color:var(--starfish-green,#285f4b)!important;
+    box-shadow:0 2px 8px rgba(35,72,58,.055)!important;
+    -webkit-backdrop-filter:blur(10px)!important;
+    backdrop-filter:blur(10px)!important;
+  }
+  .sf-mobile-command-icon svg{
+    width:29px!important;
+    height:29px!important;
+  }
+  .sf-mobile-command-icon.active{
+    background:rgba(40,95,75,.13)!important;
+    border-color:rgba(40,95,75,.16)!important;
+    color:var(--starfish-green,#285f4b)!important;
+  }
+
+  #floatingNewTask,
+  #floatingNewTask.visible,
+  #floatingNewTask:not(.visible){
+    width:62px!important;
+    height:62px!important;
+    min-width:62px!important;
+    min-height:62px!important;
+    border-width:4px!important;
+    bottom:max(34px,calc(env(safe-area-inset-bottom) + 34px))!important;
+  }
+  #floatingNewTask::before{
+    font-size:37px!important;
+  }
+
+  /* Search/filter panels use the same soft glass/surface language as the footer controls. */
+  #utilityPanel:not(.collapsed){
+    background:rgba(248,251,249,.95)!important;
+    border-bottom:1px solid rgba(40,95,75,.10)!important;
+    box-shadow:0 12px 28px rgba(35,72,58,.10)!important;
+  }
+  #utilityPanel .search{
+    background:rgba(255,255,255,.90)!important;
+    border-color:rgba(40,95,75,.14)!important;
+    box-shadow:0 2px 8px rgba(35,72,58,.05)!important;
+  }
+  #utilityPanel .list-options-row,
+  #utilityPanel .list-options-button-row{
+    border-color:rgba(40,95,75,.10)!important;
+  }
+
+  .sf-mobile-view-popover{
+    left:22px!important;
+    bottom:calc(94px + env(safe-area-inset-bottom))!important;
+    background:rgba(248,251,249,.96)!important;
+    border-color:rgba(40,95,75,.10)!important;
+    box-shadow:0 12px 28px rgba(35,72,58,.12)!important;
+  }
+}
+</style>
 <style id="v83v-task-title-weight">
 .task-title{font-weight:550!important;}
 </style>
@@ -5284,7 +5385,10 @@ body:not(.sf-auth-pending) #floatingNewTask{
 <nav id="sfMobileCommandBar" class="sf-mobile-command-bar" aria-label="Task controls">
   <button id="sfMobileTaskView" class="sf-mobile-task-view" type="button" aria-expanded="false" aria-label="Task views">
     <svg class="sf-mobile-task-view-icon" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M6 7h12M6 12h12M6 17h8" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+      <path d="M8 7h10M8 12h10M8 17h7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+      <circle cx="4.5" cy="7" r="1.1" fill="currentColor"/>
+      <circle cx="4.5" cy="12" r="1.1" fill="currentColor"/>
+      <circle cx="4.5" cy="17" r="1.1" fill="currentColor"/>
     </svg>
     <span id="sfMobileTaskViewLabel" class="sf-mobile-task-view-label">Tasks</span>
     <strong id="sfMobileTaskViewCount" class="sf-mobile-task-view-badge">0</strong>
@@ -5292,10 +5396,14 @@ body:not(.sf-auth-pending) #floatingNewTask{
   <div class="sf-mobile-command-spacer" aria-hidden="true"></div>
   <div class="sf-mobile-command-actions">
     <button id="sfMobileSearch" class="sf-mobile-command-icon" type="button" aria-label="Search tasks">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m15.5 15.5 5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.25" cy="10.25" r="6.15" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="m14.9 14.9 5.1 5.1" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
     </button>
     <button id="sfMobileOptions" class="sf-mobile-command-icon" type="button" aria-label="Sort and filter tasks">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10M14 4v6M7 14v6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 7h4M12 7h8M4 17h9M17 17h3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+        <circle cx="10" cy="7" r="2" fill="none" stroke="currentColor" stroke-width="1.9"/>
+        <circle cx="15" cy="17" r="2" fill="none" stroke="currentColor" stroke-width="1.9"/>
+      </svg>
     </button>
   </div>
 </nav>
@@ -6307,45 +6415,95 @@ function setActiveTab(){
 }
 
 
+function setMobileToolbarActive(which){
+  document.getElementById('sfMobileTaskView')?.classList.toggle('active',which==='tasks');
+  document.getElementById('sfMobileSearch')?.classList.toggle('active',which==='search');
+  document.getElementById('sfMobileOptions')?.classList.toggle('active',which==='options');
+}
+
 function closeMobileViewPopover(){
   const p=document.getElementById('sfMobileViewPopover');
   const b=document.getElementById('sfMobileTaskView');
   if(p)p.hidden=true;
   if(b)b.setAttribute('aria-expanded','false');
+  b?.classList.remove('active');
 }
-document.getElementById('sfMobileTaskView')?.addEventListener('click',()=>{
+
+function closeMobileUtilityPanel(){
+  const p=document.getElementById('utilityPanel');
+  if(p){
+    p.classList.add('collapsed');
+    p.classList.remove('sf-mobile-search-mode','sf-mobile-options-mode');
+  }
+  document.getElementById('utilityToggle')?.setAttribute('aria-expanded','false');
+  document.getElementById('sfMobileSearch')?.classList.remove('active');
+  document.getElementById('sfMobileOptions')?.classList.remove('active');
+}
+
+document.getElementById('sfMobileTaskView')?.addEventListener('click',e=>{
+  e.stopPropagation();
   const p=document.getElementById('sfMobileViewPopover');
   const b=document.getElementById('sfMobileTaskView');
   if(!p)return;
   const opening=p.hidden;
+  closeMobileUtilityPanel();
   p.hidden=!opening;
   b?.setAttribute('aria-expanded',opening?'true':'false');
+  setMobileToolbarActive(opening?'tasks':null);
 });
+
 document.getElementById('sfMobileViewPopover')?.addEventListener('click',e=>{
+  e.stopPropagation();
   const btn=e.target.closest('[data-mobile-age]');
   if(!btn)return;
   const original=document.querySelector(`.age-filter[data-age-view="${btn.dataset.mobileAge}"]`);
   closeMobileViewPopover();
   original?.click();
 });
-document.getElementById('sfMobileSearch')?.addEventListener('click',()=>{
+
+document.getElementById('sfMobileSearch')?.addEventListener('click',e=>{
+  e.stopPropagation();
   closeMobileViewPopover();
   const p=document.getElementById('utilityPanel');
   if(!p)return;
+  const alreadyOpen=!p.classList.contains('collapsed') && p.classList.contains('sf-mobile-search-mode');
+  if(alreadyOpen){
+    closeMobileUtilityPanel();
+    return;
+  }
   p.classList.remove('sf-mobile-options-mode');
   p.classList.add('sf-mobile-search-mode');
   p.classList.remove('collapsed');
   document.getElementById('utilityToggle')?.setAttribute('aria-expanded','true');
+  setMobileToolbarActive('search');
   setTimeout(()=>document.getElementById('search')?.focus(),20);
 });
-document.getElementById('sfMobileOptions')?.addEventListener('click',()=>{
+
+document.getElementById('sfMobileOptions')?.addEventListener('click',e=>{
+  e.stopPropagation();
   closeMobileViewPopover();
   const p=document.getElementById('utilityPanel');
   if(!p)return;
+  const alreadyOpen=!p.classList.contains('collapsed') && p.classList.contains('sf-mobile-options-mode');
+  if(alreadyOpen){
+    closeMobileUtilityPanel();
+    return;
+  }
   p.classList.remove('sf-mobile-search-mode');
   p.classList.add('sf-mobile-options-mode');
   p.classList.remove('collapsed');
   document.getElementById('utilityToggle')?.setAttribute('aria-expanded','true');
+  setMobileToolbarActive('options');
+});
+
+document.getElementById('utilityPanel')?.addEventListener('click',e=>e.stopPropagation());
+
+document.addEventListener('click',e=>{
+  if(window.innerWidth>760)return;
+  const target=e.target;
+  if(target.closest('#sfMobileCommandBar') || target.closest('#sfMobileViewPopover') || target.closest('#utilityPanel'))return;
+  closeMobileViewPopover();
+  closeMobileUtilityPanel();
 });
 
 document.querySelectorAll('.age-filter').forEach(btn=>btn.addEventListener('click',()=>{
