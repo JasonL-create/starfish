@@ -5012,6 +5012,96 @@ body:not(.sf-auth-pending) #floatingNewTask{
   }
 }
 </style>
+<style id="v83zg-mobile-command-bar-balance">
+@media(max-width:760px){
+  /* With the old summary strip gone, content should begin directly below the fixed app header. */
+  .app{
+    padding-top:calc(var(--v79-header-h) + 14px)!important;
+  }
+
+  /* Left control now reads like a native navigation icon instead of a labeled form button. */
+  .sf-mobile-task-view{
+    position:relative!important;
+    width:46px!important;
+    min-width:46px!important;
+    height:46px!important;
+    padding:0!important;
+    border:0!important;
+    border-radius:12px!important;
+    background:transparent!important;
+    box-shadow:none!important;
+    color:#5f6c66!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+  }
+  .sf-mobile-task-view-icon{
+    width:28px!important;
+    height:28px!important;
+    display:block!important;
+  }
+  .sf-mobile-task-view-label{
+    position:absolute!important;
+    width:1px!important;
+    height:1px!important;
+    overflow:hidden!important;
+    clip-path:inset(50%)!important;
+  }
+  .sf-mobile-task-view-badge{
+    position:absolute!important;
+    top:2px!important;
+    right:0!important;
+    min-width:18px!important;
+    height:18px!important;
+    padding:0 5px!important;
+    border-radius:999px!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    background:var(--starfish-green,#285f4b)!important;
+    color:#fff!important;
+    border:2px solid rgba(255,255,255,.95)!important;
+    font-size:10px!important;
+    line-height:1!important;
+    font-weight:750!important;
+    box-sizing:border-box!important;
+  }
+
+  /* Search/sort panels are centered and attached directly to the app header. */
+  #utilityPanel:not(.collapsed){
+    position:fixed!important;
+    top:var(--v79-header-h)!important;
+    left:50%!important;
+    right:auto!important;
+    transform:translateX(-50%)!important;
+    width:min(100%,760px)!important;
+    max-width:760px!important;
+    min-width:0!important;
+    margin:0!important;
+    padding-left:18px!important;
+    padding-right:18px!important;
+    box-sizing:border-box!important;
+    border:0!important;
+    border-top:1px solid #e8ece9!important;
+    border-bottom:1px solid rgba(220,226,222,.82)!important;
+    border-radius:0 0 18px 18px!important;
+    background:rgba(255,255,255,.96)!important;
+    -webkit-backdrop-filter:blur(18px) saturate(120%)!important;
+    backdrop-filter:blur(18px) saturate(120%)!important;
+    box-shadow:0 12px 28px rgba(35,72,58,.10)!important;
+    overflow:auto!important;
+    z-index:69!important;
+  }
+
+  /* The task-view popup visually rises from the new list icon. */
+  .sf-mobile-view-popover{
+    left:12px!important;
+    bottom:calc(88px + env(safe-area-inset-bottom))!important;
+    width:190px!important;
+    border-radius:14px 14px 14px 6px!important;
+  }
+}
+</style>
 <style id="v83v-task-title-weight">
 .task-title{font-weight:550!important;}
 </style>
@@ -5192,9 +5282,12 @@ body:not(.sf-auth-pending) #floatingNewTask{
 
 
 <nav id="sfMobileCommandBar" class="sf-mobile-command-bar" aria-label="Task controls">
-  <button id="sfMobileTaskView" class="sf-mobile-task-view" type="button" aria-expanded="false">
-    <span id="sfMobileTaskViewLabel">Tasks</span>
-    <strong id="sfMobileTaskViewCount">0</strong>
+  <button id="sfMobileTaskView" class="sf-mobile-task-view" type="button" aria-expanded="false" aria-label="Task views">
+    <svg class="sf-mobile-task-view-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M6 7h12M6 12h12M6 17h8" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+    </svg>
+    <span id="sfMobileTaskViewLabel" class="sf-mobile-task-view-label">Tasks</span>
+    <strong id="sfMobileTaskViewCount" class="sf-mobile-task-view-badge">0</strong>
   </button>
   <div class="sf-mobile-command-spacer" aria-hidden="true"></div>
   <div class="sf-mobile-command-actions">
