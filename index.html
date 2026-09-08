@@ -4831,6 +4831,113 @@ body:not(.sf-auth-pending) #floatingNewTask{
 .task-date-divider:first-child{margin-top:4px}
 .task-date-divider::after{content:'';flex:1;height:1px;background:rgba(127,137,132,.30)}
 </style>
+<style id="v83ze-mobile-command-bar">
+.sf-mobile-command-bar,.sf-mobile-view-popover{display:none}
+@media(max-width:760px){
+  /* Replace the web-style summary strip with a compact app command bar. */
+  .tasks-section-divider{display:none!important}
+
+  .sf-mobile-command-bar{
+    display:flex;
+    position:fixed;
+    left:0;right:0;bottom:0;
+    height:calc(56px + env(safe-area-inset-bottom));
+    padding:0 18px env(safe-area-inset-bottom);
+    align-items:center;
+    z-index:3000;
+    pointer-events:none;
+    box-sizing:border-box;
+  }
+  .sf-mobile-task-view,.sf-mobile-command-actions{
+    pointer-events:auto;
+  }
+  .sf-mobile-task-view{
+    height:34px;
+    min-width:84px;
+    padding:0 11px;
+    border:1px solid rgba(40,95,75,.20);
+    border-radius:11px;
+    background:rgba(255,255,255,.55);
+    color:#285f4b;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    font:inherit;
+    font-size:12px;
+    font-weight:650;
+    box-shadow:0 2px 7px rgba(35,72,58,.08);
+    -webkit-backdrop-filter:blur(12px);
+    backdrop-filter:blur(12px);
+  }
+  .sf-mobile-task-view strong{font-size:12px;font-weight:750}
+  .sf-mobile-command-spacer{flex:1}
+  .sf-mobile-command-actions{
+    display:flex;
+    align-items:center;
+    gap:5px;
+  }
+  .sf-mobile-command-icon{
+    width:36px;height:36px;
+    padding:7px;
+    border:0;
+    background:transparent;
+    color:#5f6c66;
+    border-radius:10px;
+  }
+  .sf-mobile-command-icon svg{width:22px;height:22px;display:block}
+  .sf-mobile-command-icon.active{color:#ff6b45;background:rgba(255,255,255,.36)}
+
+  .sf-mobile-view-popover{
+    position:fixed;
+    display:block;
+    left:14px;
+    bottom:calc(66px + env(safe-area-inset-bottom));
+    width:184px;
+    padding:7px;
+    border:1px solid rgba(137,149,143,.28);
+    border-radius:15px;
+    background:rgba(255,255,255,.88);
+    -webkit-backdrop-filter:blur(20px) saturate(125%);
+    backdrop-filter:blur(20px) saturate(125%);
+    box-shadow:0 10px 30px rgba(35,72,58,.16);
+    z-index:3100;
+  }
+  .sf-mobile-view-popover[hidden]{display:none!important}
+  .sf-mobile-view-popover button{
+    width:100%;
+    min-height:39px;
+    border:0;
+    border-radius:9px;
+    background:transparent;
+    padding:0 10px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    color:#59645f;
+    font:inherit;
+    font-size:13px;
+    text-align:left;
+  }
+  .sf-mobile-view-popover button.active{
+    color:#285f4b;
+    font-weight:700;
+    background:rgba(40,95,75,.07);
+  }
+  .sf-mobile-view-popover strong{font-size:12px;font-weight:700}
+
+  /* The existing + button remains exactly the same and stays centered above the dock. */
+  #floatingNewTask,
+  #floatingNewTask.visible,
+  #floatingNewTask:not(.visible){
+    z-index:3200!important;
+  }
+
+  /* Search/options reuse the existing panel instead of duplicating its logic. */
+  #utilityPanel.sf-mobile-search-mode .toolbar{display:none!important}
+  #utilityPanel.sf-mobile-options-mode .list-options-search{display:none!important}
+}
+</style>
 <style id="v83v-task-title-weight">
 .task-title{font-weight:550!important;}
 </style>
@@ -5007,6 +5114,29 @@ body:not(.sf-auth-pending) #floatingNewTask{
   <button id="clearActiveFilters" type="button">Clear Filter</button>
 </div>
 <main id="taskList" class="tasks"></main>
+</div>
+
+
+<nav id="sfMobileCommandBar" class="sf-mobile-command-bar" aria-label="Task controls">
+  <button id="sfMobileTaskView" class="sf-mobile-task-view" type="button" aria-expanded="false">
+    <span id="sfMobileTaskViewLabel">Tasks</span>
+    <strong id="sfMobileTaskViewCount">0</strong>
+  </button>
+  <div class="sf-mobile-command-spacer" aria-hidden="true"></div>
+  <div class="sf-mobile-command-actions">
+    <button id="sfMobileSearch" class="sf-mobile-command-icon" type="button" aria-label="Search tasks">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m15.5 15.5 5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+    <button id="sfMobileOptions" class="sf-mobile-command-icon" type="button" aria-label="Sort and filter tasks">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10M14 4v6M7 14v6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+</nav>
+<div id="sfMobileViewPopover" class="sf-mobile-view-popover" hidden>
+  <button type="button" data-mobile-age="all"><span>All</span><strong data-mobile-count="all">0</strong></button>
+  <button type="button" data-mobile-age="today"><span>Today</span><strong data-mobile-count="today">0</strong></button>
+  <button type="button" data-mobile-age="old"><span>7+ Days</span><strong data-mobile-count="old">0</strong></button>
+  <button type="button" data-mobile-age="overdue"><span>Overdue</span><strong data-mobile-count="overdue">0</strong></button>
 </div>
 
 <div id="taskDetailsModal" class="confirm-backdrop">
@@ -5680,6 +5810,20 @@ function render(){
   document.querySelector('[data-age-view="overdue"]').textContent=`OVERDUE (${overdueCount})`;
   document.querySelectorAll('.age-filter').forEach(b=>b.classList.toggle('active',b.dataset.ageView===ageView));
   document.querySelector('.overdue-filter').classList.toggle('has-overdue',overdueCount>0);
+
+  const mobileCounts={all:currentTasks.length,today:todayCount,old:oldCount,overdue:overdueCount};
+  document.querySelectorAll('[data-mobile-count]').forEach(el=>{
+    el.textContent=mobileCounts[el.dataset.mobileCount] ?? 0;
+  });
+  document.querySelectorAll('[data-mobile-age]').forEach(el=>{
+    el.classList.toggle('active',el.dataset.mobileAge===ageView);
+  });
+  const mobileViewLabel=document.getElementById('sfMobileTaskViewLabel');
+  const mobileViewCount=document.getElementById('sfMobileTaskViewCount');
+  if(mobileViewLabel) mobileViewLabel.textContent=
+    ageView==='today'?'Today':ageView==='old'?'7+ Days':ageView==='overdue'?'Overdue':'Tasks';
+  if(mobileViewCount) mobileViewCount.textContent=mobileCounts[ageView] ?? currentTasks.length;
+
   updateActiveFilterStatus();
   if(!q && view==='current'){
     if(ageView==='today') tasks=tasks.filter(isCreatedToday);
@@ -5994,6 +6138,48 @@ function setActiveTab(){
     view==='shared-out'?'Tasks I Shared':
     view==='shared-in'?'Tasks Shared With Me':'Current';
 }
+
+
+function closeMobileViewPopover(){
+  const p=document.getElementById('sfMobileViewPopover');
+  const b=document.getElementById('sfMobileTaskView');
+  if(p)p.hidden=true;
+  if(b)b.setAttribute('aria-expanded','false');
+}
+document.getElementById('sfMobileTaskView')?.addEventListener('click',()=>{
+  const p=document.getElementById('sfMobileViewPopover');
+  const b=document.getElementById('sfMobileTaskView');
+  if(!p)return;
+  const opening=p.hidden;
+  p.hidden=!opening;
+  b?.setAttribute('aria-expanded',opening?'true':'false');
+});
+document.getElementById('sfMobileViewPopover')?.addEventListener('click',e=>{
+  const btn=e.target.closest('[data-mobile-age]');
+  if(!btn)return;
+  const original=document.querySelector(`.age-filter[data-age-view="${btn.dataset.mobileAge}"]`);
+  closeMobileViewPopover();
+  original?.click();
+});
+document.getElementById('sfMobileSearch')?.addEventListener('click',()=>{
+  closeMobileViewPopover();
+  const p=document.getElementById('utilityPanel');
+  if(!p)return;
+  p.classList.remove('sf-mobile-options-mode');
+  p.classList.add('sf-mobile-search-mode');
+  p.classList.remove('collapsed');
+  document.getElementById('utilityToggle')?.setAttribute('aria-expanded','true');
+  setTimeout(()=>document.getElementById('search')?.focus(),20);
+});
+document.getElementById('sfMobileOptions')?.addEventListener('click',()=>{
+  closeMobileViewPopover();
+  const p=document.getElementById('utilityPanel');
+  if(!p)return;
+  p.classList.remove('sf-mobile-search-mode');
+  p.classList.add('sf-mobile-options-mode');
+  p.classList.remove('collapsed');
+  document.getElementById('utilityToggle')?.setAttribute('aria-expanded','true');
+});
 
 document.querySelectorAll('.age-filter').forEach(btn=>btn.addEventListener('click',()=>{
   if(btn.dataset.ageView==='all'){
