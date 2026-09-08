@@ -4826,6 +4826,11 @@ body:not(.sf-auth-pending) #floatingNewTask{
 }
 </style>
 
+<style id="v83zd-date-dividers">
+.task-date-divider{display:flex;align-items:center;gap:10px;margin:18px 3px 9px;color:#7f8984;font-size:11px;font-weight:700;letter-spacing:.055em;text-transform:uppercase}
+.task-date-divider:first-child{margin-top:4px}
+.task-date-divider::after{content:'';flex:1;height:1px;background:rgba(127,137,132,.30)}
+</style>
 <style id="v83v-task-title-weight">
 .task-title{font-weight:550!important;}
 </style>
@@ -5609,6 +5614,31 @@ function bindPendingInviteCards(){
   // Incoming invitation Accept/Decline buttons are handled in the cloud layer.
 }
 
+
+function createdDividerKey(t){
+  const d=new Date(t.createdAt);
+  return isNaN(d)?'':`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+}
+function createdDividerLabel(t){
+  const d=new Date(t.createdAt),n=new Date();
+  const a=new Date(n.getFullYear(),n.getMonth(),n.getDate());
+  const b=new Date(d.getFullYear(),d.getMonth(),d.getDate());
+  const x=Math.round((a-b)/86400000);
+  if(x===0)return 'Today';
+  if(x===1)return 'Yesterday';
+  return d.toLocaleDateString(undefined,{weekday:'long',month:'short',day:'numeric'});
+}
+function renderTasksWithDateDividers(tasks,q,show){
+  if(!show)return tasks.map(t=>taskHtml(t,q)).join('');
+  let last='';
+  return tasks.map(t=>{
+    const key=createdDividerKey(t);
+    const divider=key&&key!==last?`<div class="task-date-divider">${esc(createdDividerLabel(t))}</div>`:'';
+    if(key)last=key;
+    return divider+taskHtml(t,q);
+  }).join('');
+}
+
 function render(){
   if(document.querySelector('.task-card.sf-genie-hiding')){
     window.__sfDeferredRender=true;
@@ -5685,7 +5715,8 @@ function render(){
     bindPendingInviteCards();
     return;
   }
-  list.innerHTML=inviteCards + tasks.map(t=>taskHtml(t,q)).join('');
+  const showDateDividers=!q && view==='current' && ageView==='all' && cat==='all' && sort==='created-desc';
+  list.innerHTML=inviteCards + renderTasksWithDateDividers(tasks,q,showDateDividers);
   bindPendingInviteCards();
   bindTaskEvents();
 }
