@@ -4804,6 +4804,28 @@ body:not(.sf-auth-pending) #floatingNewTask{
 }
 </style>
 
+<style id="v83zc-mobile-elevated-task-cards">
+@media(max-width:760px){
+  /* Mobile-only elevation test: preserve layout and behavior, but make each
+     task read as a lifted white card instead of primarily an outlined area. */
+  .task-card{
+    border:1px solid rgba(137,149,143,.72)!important;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.95) inset,
+      0 3px 7px rgba(35,72,58,.08),
+      0 9px 20px rgba(35,72,58,.10)!important;
+  }
+
+  .task-card.is-overdue{
+    border:1.5px solid var(--starfish-orange,#ff6b45)!important;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.90) inset,
+      0 3px 7px rgba(87,58,45,.07),
+      0 9px 20px rgba(87,58,45,.10)!important;
+  }
+}
+</style>
+
 <style id="v83v-task-title-weight">
 .task-title{font-weight:550!important;}
 </style>
