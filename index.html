@@ -5356,7 +5356,37 @@ body:not(.sf-auth-pending) #floatingNewTask{
   }
 }
 </style>
-</head>
+<style id="v83zl-new-task-starfish-card">
+#newTaskModal .v82-newtask-box{border-radius:24px!important;overflow:hidden!important;box-shadow:0 18px 48px rgba(35,72,58,.18)!important}
+#newTaskModal .v82-newtask-head{position:relative!important;padding:22px 22px 14px 86px!important;min-height:88px!important;border-bottom:0!important}
+#newTaskModal .v82-newtask-head::before{content:"★";position:absolute;left:24px;top:22px;width:48px;height:48px;display:flex;align-items:center;justify-content:center;color:var(--starfish-green,#285f4b);background:rgba(222,239,230,.78);border-radius:50%;font-size:30px;line-height:1;transform:rotate(-8deg)}
+#newTaskModal .v82-newtask-head h3{font-size:25px!important;color:#173f31!important;margin:0!important}
+#newTaskModal .v82-newtask-head h3::after{content:"Keep it simple. You can add more details later.";display:block;margin-top:5px;font-size:13px;line-height:1.35;font-weight:400;color:#71827a}
+#newTaskModal .details-close{width:42px!important;height:42px!important;border-radius:50%!important;background:rgba(232,241,237,.78)!important;color:var(--starfish-green,#285f4b)!important}
+#newTaskModal .v82-title-wrap{padding:8px 22px 12px!important}
+#newTaskModal .v82-title-input{min-height:64px!important;padding:15px 16px!important;border:2px solid var(--starfish-green,#285f4b)!important;border-radius:17px!important;background:#fff!important;color:#243a31!important;font-size:19px!important;box-shadow:0 0 0 1px rgba(40,95,75,.03)!important}
+#newTaskModal .v82-title-input:focus{border-color:var(--starfish-green,#285f4b)!important;box-shadow:0 0 0 4px rgba(40,95,75,.08)!important}
+#newTaskModal .v81-detail-group{margin:0 22px!important;padding:0!important;background:transparent!important;border:0!important}
+#newTaskModal #addNewTaskSubtask,#newTaskModal #newTaskCategoryRow{min-height:68px!important;margin:9px 0!important;padding:10px 14px!important;border:0!important;border-radius:17px!important;background:rgba(232,241,237,.72)!important;color:#194b39!important}
+#newTaskModal #addNewTaskSubtask .details-action-icon,#newTaskModal #newTaskCategoryRow .detail-row-icon{width:42px!important;height:42px!important;min-width:42px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;border-radius:50%!important;background:rgba(214,235,223,.90)!important;color:var(--starfish-green,#285f4b)!important}
+#newTaskModal #addNewTaskSubtask>span:last-child,#newTaskModal #newTaskCategoryRow .detail-row-label>span:last-child{font-size:16px!important;font-weight:650!important}
+#newTaskModal #newTaskCategoryRow .details-value{color:var(--starfish-green,#285f4b)!important}
+#newTaskModal #newTaskCategoryText{font-size:13px!important;color:#71827a!important}
+#newTaskModal .v82-newtask-subtasks{padding:2px 8px 5px 56px!important}
+#newTaskModal .v82-newtask-actions{margin:14px 22px 0!important;padding:16px 0 0!important;border-top:1px solid rgba(126,141,133,.24)!important}
+#newTaskModal .newtask-create{border-radius:12px!important;background:var(--starfish-green,#285f4b)!important;box-shadow:0 4px 10px rgba(35,72,58,.12)!important}
+#newTaskModal .newtask-cancel{border-radius:12px!important;background:#fff!important}
+@media(max-width:520px){
+#newTaskModal .v82-newtask-head{padding:19px 18px 12px 76px!important;min-height:80px!important}
+#newTaskModal .v82-newtask-head::before{left:18px;top:19px;width:44px;height:44px;font-size:27px}
+#newTaskModal .v82-newtask-head h3{font-size:23px!important}
+#newTaskModal .v82-newtask-head h3::after{font-size:12px}
+#newTaskModal .v82-title-wrap{padding:8px 18px 10px!important}
+#newTaskModal .v81-detail-group{margin:0 18px!important}
+#newTaskModal #addNewTaskSubtask,#newTaskModal #newTaskCategoryRow{min-height:64px!important}
+#newTaskModal .v82-newtask-actions{margin:12px 18px 0!important}
+}
+</style></head>
 <body class="sf-auth-pending">
 
 <div id="sfAuthScreen" class="sf-auth-screen">
