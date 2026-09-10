@@ -5248,6 +5248,89 @@ body:not(.sf-auth-pending) #floatingNewTask{
 }
 </style>
 
+
+<style id="v83zj-simple-new-task-subtask-hierarchy">
+/* New Task is intentionally quick: title + Category + Add subtask.
+   Advanced task management remains available in Task Details after creation. */
+#newTaskModal .sf-newtask-advanced{display:none!important;}
+#newTaskModal .v82-title-wrap{padding-bottom:8px!important;}
+#newTaskModal .v81-detail-group{
+  border-top:0!important;
+  border-bottom:0!important;
+  box-shadow:none!important;
+}
+#newTaskModal #newTaskCategoryRow,
+#newTaskModal #addNewTaskSubtask{
+  min-height:48px!important;
+}
+
+/* Make subtasks read as connected children rather than tiny indented metadata. */
+.task-card .subtasks{
+  position:relative!important;
+  margin:11px 0 0 12px!important;
+  padding-left:34px!important;
+  gap:8px!important;
+  border-left:0!important;
+}
+.task-card .subtasks::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:-9px;
+  bottom:14px;
+  width:1px;
+  background:rgba(126,141,133,.48);
+  border-radius:1px;
+}
+.task-card .subtask{
+  position:relative!important;
+  gap:9px!important;
+  min-height:28px!important;
+}
+.task-card .subtask::before{
+  content:"";
+  position:absolute;
+  left:-34px;
+  top:12px;
+  width:25px;
+  height:11px;
+  border-left:0;
+  border-bottom:1px solid rgba(126,141,133,.48);
+  border-bottom-left-radius:0;
+}
+.task-card .subtask-title{
+  font-size:15.5px!important;
+  line-height:1.35!important;
+}
+.task-card .subtask .check{
+  width:19px!important;
+  height:19px!important;
+  margin-top:1px!important;
+}
+.task-card .subtask-composer{
+  position:relative!important;
+}
+.task-card .subtask-composer::before{
+  content:"";
+  position:absolute;
+  left:-34px;
+  top:13px;
+  width:25px;
+  border-bottom:1px solid rgba(126,141,133,.38);
+}
+@media(max-width:760px){
+  .task-card .subtasks{
+    margin-left:12px!important;
+    padding-left:31px!important;
+  }
+  .task-card .subtask::before,
+  .task-card .subtask-composer::before{
+    left:-31px!important;
+    width:22px!important;
+  }
+  .task-card .subtask-title{font-size:16px!important;}
+}
+</style>
 </head>
 <body class="sf-auth-pending">
 
@@ -5600,13 +5683,13 @@ body:not(.sf-auth-pending) #floatingNewTask{
         </div>
       </div>
 
-      <button class="details-summary-row details-icon-row" id="newTaskInviteRow" type="button">
+      <button class="details-summary-row details-icon-row sf-newtask-advanced" id="newTaskInviteRow" type="button">
         <span class="detail-row-label"><span class="detail-row-icon">
           <svg class="detail-line-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3.8 18c.5-3.7 2.3-5.7 5.2-5.7s4.7 2 5.2 5.7M18 7v6M15 10h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
         </span><span>Invite to task</span></span>
         <span class="details-value"><span id="newTaskInviteText">No one</span><span>›</span></span>
       </button>
-      <div id="newTaskInviteEditor" class="details-editor v81g-invite-editor" hidden>
+      <div id="newTaskInviteEditor" class="details-editor v81g-invite-editor sf-newtask-advanced" hidden>
         <select id="newTaskInvite" hidden><option value="">Invite To Task</option></select>
         <div id="newTaskInviteChoices" class="v81g-invite-choices"></div>
         <button id="newTaskAddInviteChoice" class="v81g-add-invite-choice" type="button">+ Invite Someone New</button>
@@ -5625,7 +5708,7 @@ body:not(.sf-auth-pending) #floatingNewTask{
       <div id="newTaskSubtasks" class="newtask-subtasks v82-newtask-subtasks"></div>
     </section>
 
-    <section class="v81-detail-group">
+    <section class="v81-detail-group sf-newtask-advanced">
       <button class="details-summary-row details-icon-row" id="toggleNewTaskDue" type="button">
         <span class="detail-row-label"><span class="detail-row-icon">
           <svg class="detail-line-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3v3M18 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -5667,7 +5750,7 @@ body:not(.sf-auth-pending) #floatingNewTask{
       </div>
     </section>
 
-    <section class="v81-detail-group">
+    <section class="v81-detail-group sf-newtask-advanced">
       <button id="toggleNewTaskContact" class="details-summary-row details-icon-row" type="button">
         <span class="detail-row-label"><span class="detail-row-icon">
           <svg class="detail-line-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3.8 18c.5-3.7 2.3-5.7 5.2-5.7s4.7 2 5.2 5.7M16 7h5M16 11h5M16 15h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
