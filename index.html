@@ -5331,6 +5331,31 @@ body:not(.sf-auth-pending) #floatingNewTask{
   .task-card .subtask-title{font-size:16px!important;}
 }
 </style>
+
+<style id="v83zk-subtask-straight-hierarchy">
+/* Keep the vertical cue under the main checkbox, but remove branch arms.
+   Child checkboxes sit beneath the first letter of the main task title. */
+.task-card .subtasks{
+  margin-left:12px!important;
+  padding-left:34px!important;
+}
+.task-card .subtasks::before{
+  left:0!important;
+  top:-9px!important;
+  bottom:14px!important;
+}
+.task-card .subtask::before,
+.task-card .subtask-composer::before{
+  content:none!important;
+  display:none!important;
+}
+@media(max-width:760px){
+  .task-card .subtasks{
+    margin-left:12px!important;
+    padding-left:34px!important;
+  }
+}
+</style>
 </head>
 <body class="sf-auth-pending">
 
