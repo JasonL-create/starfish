@@ -168,11 +168,21 @@
   .task-title:hover,.subtask-title:hover{background:#f5f6f4}
 }
 .inline-title-editor{
-  width:100%;min-width:0;font:inherit;color:inherit;
+  display:block;
+  width:100%;min-width:0;
+  font:inherit;color:inherit;line-height:inherit;
   border:1px solid var(--line);background:#fff;border-radius:7px;
   padding:4px 6px;outline:none;
+  resize:none;overflow:hidden;
+  white-space:pre-wrap;
+  box-sizing:border-box;
 }
 .inline-title-editor:focus{border-color:var(--line-strong);box-shadow:0 0 0 3px rgba(95,116,104,.08)}
+@media(max-width:760px){
+  /* iOS Safari auto-zooms focused text controls below 16px. */
+  .inline-title-editor,
+  .subtask-input{font-size:16px!important;}
+}
 </style>
 
 
@@ -6318,14 +6328,26 @@ function bindTaskEvents(){
     const menuBtn=card.querySelector('.task-menu-btn');
     if(menuBtn) menuBtn.addEventListener('click',()=>openTaskDetails(id));
     function beginInlineEdit(el, getValue, setValue){
-      if(el.querySelector('input')) return;
+      if(el.querySelector('.inline-title-editor')) return;
       const old=getValue();
-      const input=document.createElement('input');
+      const input=document.createElement('textarea');
       input.className='inline-title-editor';
       input.value=old;
+      input.rows=1;
+
+      const autoSize=()=>{
+        input.style.height='auto';
+        input.style.height=Math.max(input.scrollHeight, 28)+'px';
+      };
+
       el.replaceChildren(input);
+      autoSize();
       input.focus();
-      input.select();
+
+      /* Keep the whole title visible rather than forcing horizontal scrolling. */
+      const end=input.value.length;
+      try{input.setSelectionRange(end,end);}catch(_){}
+
       let finished=false;
       const finish=(saveIt)=>{
         if(finished)return;finished=true;
@@ -6333,9 +6355,14 @@ function bindTaskEvents(){
         if(saveIt && val){setValue(val);save();}
         render();
       };
+
+      input.addEventListener('input',autoSize);
       input.addEventListener('keydown',ev=>{
-        if(ev.key==='Enter'){ev.preventDefault();finish(true);}
         if(ev.key==='Escape'){ev.preventDefault();finish(false);}
+        if(ev.key==='Enter' && (ev.metaKey || ev.ctrlKey)){
+          ev.preventDefault();
+          finish(true);
+        }
       });
       input.addEventListener('blur',()=>finish(true));
     }
