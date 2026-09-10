@@ -5386,7 +5386,16 @@ body:not(.sf-auth-pending) #floatingNewTask{
 #newTaskModal #addNewTaskSubtask,#newTaskModal #newTaskCategoryRow{min-height:64px!important}
 #newTaskModal .v82-newtask-actions{margin:12px 18px 0!important}
 }
-</style></head>
+</style>
+<style id="v83zm-hide-mobile-controls-during-auth">
+/* Login/signup is a separate state: no task controls should appear until auth finishes. */
+body.sf-auth-pending #sfMobileCommandBar,
+body.sf-auth-pending #sfMobileViewPopover,
+body.sf-auth-pending #floatingNewTask{
+  display:none!important;
+}
+</style>
+</head>
 <body class="sf-auth-pending">
 
 <div id="sfAuthScreen" class="sf-auth-screen">
